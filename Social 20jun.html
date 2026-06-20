@@ -8,6 +8,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -32,19 +34,19 @@
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
-        /* ================== CSS สำหรับ Member Card ================== */
+        /* ================== CSS สำหรับ Member Card ที่จูนตำแหน่งไว้ ================== */
         .member-card-wrapper {
             container-type: inline-size;
             width: 100%;
-            max-width: 400px; /* จำกัดขนาดไม่ให้ล้น Column ด้านข้าง */
+            max-width: 400px;
             margin: 0 auto;
         }
 
         .member-card {
             position: relative;
             width: 100%;
-            aspect-ratio: 16 / 9; /* รักษาสัดส่วนของบัตรให้คงที่ */
-            background-image: url('Member card BG.jpg'); /* ใช้รูป Background ตามที่แนบ */
+            aspect-ratio: 16 / 9;
+            background-image: url('Member card BG.jpg');
             background-size: cover;
             background-position: center;
             border-radius: 15px;
@@ -52,7 +54,6 @@
             overflow: hidden;
         }
 
-        /* องค์ประกอบที่ต้องวางแบบ position: absolute */
         .profile-img {
             position: absolute;
             top: 33%;
@@ -124,6 +125,8 @@
 
         .text-facebook { left: 35%; }
         .text-tiktok { left: 70%; }
+        
+        .loading { opacity: 0.6; cursor: not-allowed; }
     </style>
 </head>
 <body class="text-gray-800">
@@ -134,23 +137,14 @@
                 <img src="Logo Social plain.png" alt="Social Media Club Logo" class="h-28 object-contain drop-shadow-md" onerror="this.src='https://via.placeholder.com/150?text=Logo'">
             </div>
             <h2 class="text-2xl font-bold text-ttbBlue mb-2">เข้าสู่ระบบ</h2>
-            <p class="text-gray-500 mb-8">ระบบหน้าบ้าน สำหรับพนักงาน</p>
+            <p class="text-gray-500 mb-8">ระบบหน้าบ้าน สำหรับสมาชิกคลับ</p>
             
             <div class="mb-6">
-                <input type="text" id="loginEmpId" placeholder="กรอกรหัสพนักงาน (เช่น 10001 หรือ 18733)" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ttbOrange text-center text-lg font-medium">
+                <input type="text" id="loginEmpId" placeholder="กรอกรหัสพนักงานของคุณ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ttbOrange text-center text-lg font-medium">
             </div>
-            <button onclick="handleLogin()" class="w-full bg-ttbBlue hover:bg-blue-900 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-md">
+            <button id="btnLogin" onclick="handleLogin()" class="w-full bg-ttbBlue hover:bg-blue-900 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-md">
                 เข้าสู่ระบบ
             </button>
-            
-            <div class="mt-8 text-left bg-blue-50 p-4 rounded-lg text-sm text-gray-600">
-                <p class="font-bold mb-2"><i class="fas fa-info-circle text-ttbBlue"></i> รหัสสำหรับการทดสอบ:</p>
-                <ul class="list-disc pl-5 space-y-1">
-                    <li><b>CLSA:</b> 10001 ถึง 10010</li>
-                    <li><b>CFSA:</b> 20001 ถึง 20005</li>
-                    <li><b>พิเศษ:</b> 18733 (คุณจิรัชญา บูรภักดิ์)</li>
-                </ul>
-            </div>
         </div>
     </div>
 
@@ -182,14 +176,13 @@
                     <div class="member-card-wrapper">
                         <div class="member-card">
                             <img id="cardProfilePic" src="https://ui-avatars.com/api/?name=User&background=F68B1F&color=fff&size=300" alt="Profile" class="profile-img">
-                            
                             <img src="Logo Social media 2026.png" alt="Certified Badge" class="badge-img" onerror="this.style.display='none'">
 
                             <div id="cardEmpName" class="text-name">ชื่อ นามสกุล</div>
                             <div id="cardPositionThai" class="text-position">ตำแหน่ง</div>
                             
-                            <div id="cardEmpId" class="text-emp-id info-group">10001</div>
-                            <div id="cardMemberId" class="text-member-id info-group">0001</div>
+                            <div id="cardEmpId" class="text-emp-id info-group">รหัสพนักงาน</div>
+                            <div id="cardMemberId" class="text-member-id info-group">Member ID</div>
                             <div id="cardZone" class="text-region info-group">ภาค / เขต</div>
                             
                             <div id="cardFb" class="text-facebook social-text">Facebook Name</div>
@@ -198,11 +191,12 @@
                     </div>
 
                     <div class="glass-card p-6">
-                        <h3 class="font-bold text-ttbBlue border-b border-gray-200 pb-2 mb-4"><i class="fas fa-user-edit mr-2"></i> อัปเดตโปรไฟล์บนบัตร</h3>
+                        <h3 class="font-bold text-ttbBlue border-b border-gray-200 pb-2 mb-4"><i class="fas fa-user-edit mr-2"></i> อัปเดตโปรไฟล์</h3>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">รูปภาพโปรไฟล์</label>
-                                <input type="file" id="uploadImg" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-ttbBlue hover:file:bg-blue-100">
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">รูปภาพโปรไฟล์ (ระบบอัปโหลดเข้าคลาวด์อัตโนมัติ)</label>
+                                <input type="file" id="uploadImg" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-ttbBlue hover:file:bg-blue-100 cursor-pointer">
+                                <p id="uploadStatus" class="text-[10px] text-orange-500 mt-1 hidden">กำลังอัปโหลดภาพ...</p>
                             </div>
                             <div>
                                 <label class="block text-xs font-semibold text-gray-600 mb-1">ชื่อช่อง Facebook</label>
@@ -212,8 +206,8 @@
                                 <label class="block text-xs font-semibold text-gray-600 mb-1">ชื่อช่อง TikTok</label>
                                 <input type="text" id="inputTiktok" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-ttbBlue text-sm">
                             </div>
-                            <button onclick="saveProfile()" class="w-full bg-ttbBlue text-white text-sm font-bold py-2 rounded hover:bg-blue-800 transition shadow">
-                                อัปเดตข้อมูล
+                            <button id="btnSaveProfile" onclick="saveProfile()" class="w-full bg-ttbBlue text-white text-sm font-bold py-2 rounded hover:bg-blue-800 transition shadow">
+                                บันทึกข้อมูล Social Media
                             </button>
                         </div>
                     </div>
@@ -258,7 +252,7 @@
                                         <input type="number" id="fbPosts" value="0" min="0" class="w-full px-3 py-2 border rounded text-sm outline-none text-center focus:border-ttbBlue">
                                     </div>
                                 </div>
-                                <button onclick="saveActivity()" class="w-full bg-ttbBlue text-white text-sm font-bold py-2 rounded hover:bg-blue-800 transition shadow">
+                                <button id="btnSaveActivity" onclick="saveActivity()" class="w-full bg-ttbBlue text-white text-sm font-bold py-2 rounded hover:bg-blue-800 transition shadow">
                                     บันทึกกิจกรรม
                                 </button>
                             </div>
@@ -300,7 +294,7 @@
                                     <div>
                                         <input type="text" id="otherDetail" placeholder="ระบุรายละเอียด (ถ้าเลือกอื่นๆ)" class="w-full px-3 py-2 border rounded text-sm outline-none hidden">
                                     </div>
-                                    <button onclick="saveSales()" class="w-full bg-ttbOrange text-white text-sm font-bold py-2 rounded hover:bg-orange-600 transition shadow">
+                                    <button id="btnSaveSales" onclick="saveSales()" class="w-full bg-ttbOrange text-white text-sm font-bold py-2 rounded hover:bg-orange-600 transition shadow">
                                         ส่งยอดเข้าระบบส่วนกลาง
                                     </button>
                                 </div>
@@ -383,46 +377,53 @@
     </div>
 
     <script>
-        // --- 1. Mock Database (จำลองฐานข้อมูล) ---
-        const mockUsers = [
-            // พนักงานทดสอบพิเศษ
-            { id: "18733", memberId: "0067", name: "จิรัชญา บูรภักดิ์", positionCode: "ที่ปรึกษาอาวุโสสินเชื่อลูกค้าบุคคล", region: "ชลบุรี", zone: "RH 2", pic: "", fb: "Jiratchaya Boorapakd", tiktok: "แอนนี่ทีทีบีที่ปรึกษาสินเชื่อ" },
-            // CLSA
-            { id: "10001", memberId: "SMC-10001", name: "นาย สมชาย ใจดี", positionCode: "CLSA", region: "ภาคกลาง", zone: "BKK", pic: "", fb: "Somchai Story", tiktok: "@somchai_ttb" },
-            { id: "10002", memberId: "SMC-10002", name: "นางสาว วิภา รักงาน", positionCode: "CLSA", region: "ภาคตะวันออก", zone: "Chonburi", pic: "", fb: "Wipa.CLSA", tiktok: "@wipa_finance" },
-            { id: "10003", memberId: "SMC-10003", name: "นาย เอกชัย สายเปย์", positionCode: "CLSA", region: "ภาคเหนือ", zone: "Chiang Mai", pic: "", fb: "Ekkachai Auto", tiktok: "@ek_auto" },
-            { id: "10004", memberId: "SMC-10004", name: "นาง สมร ทรัพย์มั่งคั่ง", positionCode: "CLSA", region: "ภาคใต้", zone: "Phuket", pic: "", fb: "Samorn Wealth", tiktok: "@samorn_wealth" },
-            { id: "10005", memberId: "SMC-10005", name: "นาย ธีรเทพ ยอดนักขาย", positionCode: "CLSA", region: "ภาคตะวันออก", zone: "Rayong", pic: "", fb: "Teerathep Sales", tiktok: "@teerathep_s" },
-            { id: "10006", memberId: "SMC-10006", name: "นางสาว พรพรรณ ขยันยิ่ง", positionCode: "CLSA", region: "ภาคกลาง", zone: "BKK", pic: "", fb: "Pornpan ttb", tiktok: "@pornpan_ttb" },
-            { id: "10007", memberId: "SMC-10007", name: "นาย อนุชิต พิชิตยอด", positionCode: "CLSA", region: "ภาคตะวันตก", zone: "Hua Hin", pic: "", fb: "Anuchit C2G", tiktok: "@anuchit_c2g" },
-            { id: "10008", memberId: "SMC-10008", name: "นางสาว กัลยา พาสุข", positionCode: "CLSA", region: "ภาคตะวันออกเฉียงเหนือ", zone: "Khon Kaen", pic: "", fb: "Kanlaya Home", tiktok: "@kan_home" },
-            { id: "10009", memberId: "SMC-10009", name: "นาย วีระศักดิ์ รักองค์กร", positionCode: "CLSA", region: "ภาคเหนือ", zone: "Chiang Rai", pic: "", fb: "Weerasak ttb", tiktok: "@weera_ttb" },
-            { id: "10010", memberId: "SMC-10010", name: "นาง รุ่งทิวา ฟ้าใส", positionCode: "CLSA", region: "ภาคใต้", zone: "Songkhla", pic: "", fb: "Rungtiwa Social", tiktok: "@rungtiwa_s" },
-            // CFSA
-            { id: "20001", memberId: "SMC-20001", name: "นาย ธนาคม เงินหนา", positionCode: "CFSA", region: "ภาคกลาง", zone: "BKK", pic: "", fb: "Thanakom Credit", tiktok: "@thanakom_cc" },
-            { id: "20002", memberId: "SMC-20002", name: "นางสาว ศิริพร พรประเสริฐ", positionCode: "CFSA", region: "ภาคกลาง", zone: "Nonthaburi", pic: "", fb: "Siriporn Wealth", tiktok: "@siriporn_w" },
-            { id: "20003", memberId: "SMC-20003", name: "นาย ชัยวัฒน์ จัดให้", positionCode: "CFSA", region: "ภาคเหนือ", zone: "Chiang Mai", pic: "", fb: "Chaiwat Cards", tiktok: "@chaiwat_cards" },
-            { id: "20004", memberId: "SMC-20004", name: "นาง อรทัย ใจตรง", positionCode: "CFSA", region: "ภาคใต้", zone: "Phuket", pic: "", fb: "Orathai Finance", tiktok: "@orathai_fin" },
-            { id: "20005", memberId: "SMC-20005", name: "นาย นิคม สมหวัง", positionCode: "CFSA", region: "ภาคตะวันออก", zone: "Chonburi", pic: "", fb: "Nikom CFSA", tiktok: "@nikom_cfsa" }
-        ];
+        // ลิงก์ URL ของโปรเจกต์ Supabase ของคุณ
+        const SUPABASE_URL = 'https://vuxawbelluvnqlyaasgf.supabase.co';
+        // 🚨 นำ Project API Keys (anon public ตัวยาว ๆ) มาแปะแทนข้อความด้านล่างนี้ 🚨
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eGF3YmVsbHV2bnFseWFhc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NTY2NjcsImV4cCI6MjA5NzUzMjY2N30.Vrp6Hs_rlT2td0DBU3zwjc1HvbUgZnRWfJA5kx-LVro'; 
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-        let mockActivityLog = [];
-        let mockSalesLog = [];
         let currentUser = null;
+        let mySalesLog = [];
 
-        // --- 2. System Functions (ฟังก์ชันการทำงาน) ---
-        function handleLogin() {
+        // 🔐 ระบบล็อกอิน ตรวจสอบข้อมูลสิทธิ์กับฐานข้อมูลจริงหลังบ้าน
+        async function handleLogin() {
             const inputId = document.getElementById('loginEmpId').value.trim();
-            const user = mockUsers.find(u => u.id === inputId);
+            const btn = document.getElementById('btnLogin');
+            
+            if(!inputId) return alert("กรุณากรอกรหัสพนักงาน");
+            
+            btn.innerText = "กำลังตรวจสอบสิทธิ์...";
+            btn.classList.add('loading');
 
-            if (user) {
-                currentUser = user;
-                document.getElementById('loginSection').classList.add('hidden');
-                document.getElementById('mainAppSection').classList.remove('hidden');
-                initWorkspace();
-            } else {
-                alert("ไม่พบข้อมูลพนักงานในระบบ กรุณาตรวจสอบรหัสพนักงานอีกครั้ง");
+            try {
+                // ยิงคำสั่งไปค้นหาแถวพนักงานตัวจริงในตาราง users
+                const { data, error } = await supabase
+                    .from('users')
+                    .select('*')
+                    .eq('id', inputId)
+                    .maybeSingle(); // ป้องกัน Error หากไม่เจอรหัส
+
+                if (error) throw error;
+
+                // 🛑 กรณีไม่เจอรหัสพนักงานในระบบหลังบ้าน
+                if (!data) {
+                    alert("ไม่พบข้อมูลสมาชิก");
+                } else {
+                    // เข้าระบบสำเร็จเมื่อเจอพนักงานในฐานข้อมูล
+                    currentUser = data;
+                    document.getElementById('loginSection').classList.add('hidden');
+                    document.getElementById('mainAppSection').classList.remove('hidden');
+                    initWorkspace();
+                }
+            } catch (err) {
+                console.error(err);
+                alert("เกิดปัญหาขัดข้องในการเชื่อมต่อระบบฐานข้อมูลหลังบ้าน");
             }
+            
+            btn.innerText = "เข้าสู่ระบบ";
+            btn.classList.remove('loading');
         }
 
         function logout() {
@@ -432,54 +433,213 @@
             document.getElementById('loginSection').classList.remove('hidden');
         }
 
-        function initWorkspace() {
+        async function initWorkspace() {
             const defaultPic = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=F68B1F&color=fff&size=300`;
+            const profilePicUrl = currentUser.pic || defaultPic;
+            
             document.getElementById('navEmpName').innerText = currentUser.name;
-            document.getElementById('navProfilePic').src = currentUser.pic || defaultPic;
+            document.getElementById('navProfilePic').src = profilePicUrl;
+            document.getElementById('cardProfilePic').src = profilePicUrl;
 
-            let positionThai = currentUser.positionCode;
-            if(currentUser.positionCode === "CLSA") positionThai = "ที่ปรึกษาสินเชื่อลูกค้าบุคคล";
-            else if(currentUser.positionCode === "CFSA") positionThai = "ที่ปรึกษาการเงินลูกค้าบุคคล";
-
-            // ผูกข้อมูลเข้ากับ Member Card ที่จัด Layout ใหม่
             document.getElementById('cardEmpName').innerText = currentUser.name;
-            document.getElementById('cardPositionThai').innerText = positionThai;
+            document.getElementById('cardPositionThai').innerText = currentUser.position_code || "พนักงาน";
             document.getElementById('cardEmpId').innerText = currentUser.id;
-            document.getElementById('cardMemberId').innerText = currentUser.memberId;
-            document.getElementById('cardZone').innerText = `${currentUser.region} ${currentUser.zone}`;
-            document.getElementById('cardFb').innerText = currentUser.fb;
-            document.getElementById('cardTiktok').innerText = currentUser.tiktok;
-            document.getElementById('cardProfilePic').src = currentUser.pic || defaultPic;
+            document.getElementById('cardMemberId').innerText = currentUser.member_id || "-";
+            document.getElementById('cardZone').innerText = (currentUser.region || "") + " " + (currentUser.zone || "");
+            document.getElementById('cardFb').innerText = currentUser.fb || "-";
+            document.getElementById('cardTiktok').innerText = currentUser.tiktok || "-";
 
-            document.getElementById('inputFb').value = currentUser.fb;
-            document.getElementById('inputTiktok').value = currentUser.tiktok;
+            document.getElementById('inputFb').value = currentUser.fb || "";
+            document.getElementById('inputTiktok').value = currentUser.tiktok || "";
 
             handleProductChange();
-            renderDashboard();
+            await loadSalesData();
         }
 
-        document.getElementById('uploadImg').addEventListener('change', function(e) {
+        // ระบบอัปโหลดรูปภาพเข้าพื้นที่จัดเก็บ (Cloud Storage) ของ Supabase
+        document.getElementById('uploadImg').addEventListener('change', async function(e) {
             const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const imgData = event.target.result;
-                    document.getElementById('cardProfilePic').src = imgData;
-                    document.getElementById('navProfilePic').src = imgData;
-                    currentUser.pic = imgData; 
-                }
-                reader.readAsDataURL(file);
+            if (!file) return;
+
+            const statusText = document.getElementById('uploadStatus');
+            statusText.classList.remove('hidden');
+            statusText.innerText = "กำลังอัปโหลดภาพ...";
+            statusText.className = "text-[10px] text-orange-500 mt-1";
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+
+                const { error: uploadError } = await supabase.storage
+                    .from('avatars')
+                    .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = supabase.storage
+                    .from('avatars')
+                    .getPublicUrl(fileName);
+                
+                const imgUrl = publicUrlData.publicUrl;
+
+                await supabase.from('users').update({ pic: imgUrl }).eq('id', currentUser.id);
+
+                document.getElementById('cardProfilePic').src = imgUrl;
+                document.getElementById('navProfilePic').src = imgUrl;
+                currentUser.pic = imgUrl;
+                
+                statusText.innerText = "อัปโหลดรูปภาพลงฐานข้อมูลสำเร็จ!";
+                statusText.className = "text-[10px] text-green-600 mt-1";
+                setTimeout(() => statusText.classList.add('hidden'), 3000);
+
+            } catch (err) {
+                alert("เกิดปัญหาขัดข้องในการอัปโหลดไฟล์: " + err.message);
+                statusText.classList.add('hidden');
             }
         });
 
-        function saveProfile() {
+        async function saveProfile() {
             const fb = document.getElementById('inputFb').value;
             const tiktok = document.getElementById('inputTiktok').value;
-            currentUser.fb = fb;
-            currentUser.tiktok = tiktok;
-            document.getElementById('cardFb').innerText = fb;
-            document.getElementById('cardTiktok').innerText = tiktok;
-            alert("อัปเดตข้อมูลบนบัตรเรียบร้อยแล้ว");
+            const btn = document.getElementById('btnSaveProfile');
+            
+            btn.innerText = "กำลังบันทึก...";
+            
+            const { error } = await supabase
+                .from('users')
+                .update({ fb: fb, tiktok: tiktok })
+                .eq('id', currentUser.id);
+
+            if(error) {
+                alert("เกิดข้อผิดพลาดในการบันทึกช่องทางติดต่อ");
+            } else {
+                currentUser.fb = fb;
+                currentUser.tiktok = tiktok;
+                document.getElementById('cardFb').innerText = fb || "-";
+                document.getElementById('cardTiktok').innerText = tiktok || "-";
+                alert("บันทึกข้อมูลสำเร็จ");
+            }
+            btn.innerText = "บันทึกข้อมูล Social Media";
+        }
+
+        async function saveActivity() {
+            const month = document.getElementById('globalMonth').value;
+            const btn = document.getElementById('btnSaveActivity');
+            btn.innerText = "กำลังบันทึก...";
+            
+            const { error } = await supabase.from('activity_log').insert([{
+                emp_id: currentUser.id,
+                month: month,
+                live_date: document.getElementById('liveDate').value || "-",
+                live_channel: document.getElementById('liveChannel').value,
+                tiktok_clips: parseInt(document.getElementById('tiktokClips').value) || 0,
+                fb_posts: parseInt(document.getElementById('fbPosts').value) || 0
+            }]);
+
+            if(error) alert("บันทึกกิจกรรมไม่สำเร็จ");
+            else {
+                alert(`บันทึกกิจกรรมประจำเดือน ${month} เรียบร้อย!`);
+                document.getElementById('tiktokClips').value = 0;
+                document.getElementById('fbPosts').value = 0;
+            }
+            btn.innerText = "บันทึกกิจกรรม";
+        }
+
+        async function saveSales() {
+            const month = document.getElementById('globalMonth').value;
+            const product = document.getElementById('productType').value;
+            const qty = parseInt(document.getElementById('salesQty').value) || 0;
+            const amount = parseInt(document.getElementById('salesAmount').value) || 0;
+            const detail = document.getElementById('otherDetail').value;
+
+            if (qty === 0 && amount === 0) return alert("กรุณากรอกจำนวนหน่วยหรือเงินบาท");
+
+            const btn = document.getElementById('btnSaveSales');
+            btn.innerText = "กำลังส่งยอด...";
+
+            const { error } = await supabase.from('sales_log').insert([{
+                emp_id: currentUser.id,
+                month: month,
+                product: product,
+                quantity: qty,
+                amount: amount,
+                detail: product === 'Other' ? detail : ""
+            }]);
+
+            if(error) {
+                alert("เกิดปัญหาขัดข้องในการบันทึกยอด");
+            } else {
+                alert(`คีย์เพิ่มยอดขายสำเร็จแล้ว!`);
+                document.getElementById('salesQty').value = 0;
+                document.getElementById('salesAmount').value = 0;
+                await loadSalesData();
+            }
+            btn.innerText = "ส่งยอดเข้าระบบส่วนกลาง";
+        }
+
+        async function loadSalesData() {
+            const { data, error } = await supabase
+                .from('sales_log')
+                .select('*')
+                .eq('emp_id', currentUser.id)
+                .order('created_at', { ascending: false });
+            
+            if(!error && data) {
+                mySalesLog = data;
+                renderDashboard();
+            }
+        }
+
+        function renderDashboard() {
+            const filterMonth = document.getElementById('dashboardFilter').value;
+            let filteredSales = mySalesLog;
+            if (filterMonth !== 'ALL') {
+                filteredSales = filteredSales.filter(log => log.month === filterMonth);
+            }
+
+            let totalThb = 0, totalCards = 0, sumAuto = 0, sumHome = 0, sumC2G = 0;
+            const tbody = document.getElementById('txLogTable');
+            tbody.innerHTML = '';
+
+            filteredSales.forEach(log => {
+                if (log.product === 'Credit Card' || log.product === 'Cash Card') {
+                    totalCards += log.quantity;
+                } else {
+                    totalThb += log.amount;
+                    if (log.product === 'Auto Loan') sumAuto += log.amount;
+                    if (log.product === 'Home Loan') sumHome += log.amount;
+                    if (log.product === 'Cash2Go') sumC2G += log.amount;
+                }
+
+                let unit = "รายการ";
+                if(log.product === 'Credit Card' || log.product === 'Cash Card') unit = "ใบ";
+                else if(log.product === 'Auto Loan') unit = "คัน";
+                else if(log.product === 'Home Loan') unit = "หลัง";
+
+                const dateObj = new Date(log.created_at);
+                const dateStr = `${dateObj.getDate()}/${dateObj.getMonth()+1}/${dateObj.getFullYear()}`;
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="p-2 text-gray-500">${dateStr}</td>
+                    <td class="p-2 text-ttbBlue font-medium">${log.month}</td>
+                    <td class="p-2">${log.product} ${log.detail ? `(${log.detail})` : ''}</td>
+                    <td class="p-2 text-right">${log.quantity} ${unit}</td>
+                    <td class="p-2 text-right font-semibold text-gray-700">${log.amount.toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if(filteredSales.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">ยังไม่มีประวัติการคีย์ยอดในเดือนนี้</td></tr>`;
+            }
+
+            document.getElementById('dashAuto').innerText = sumAuto.toLocaleString();
+            document.getElementById('dashHome').innerText = sumHome.toLocaleString();
+            document.getElementById('dashC2G').innerText = sumC2G.toLocaleString();
+            document.getElementById('dashTotalThb').innerText = totalThb.toLocaleString();
+            document.getElementById('dashTotalCards').innerText = totalCards.toLocaleString();
         }
 
         function handleProductChange() {
@@ -488,8 +648,8 @@
             const amountInput = document.getElementById('salesAmount');
             const detailInput = document.getElementById('otherDetail');
 
-            if(product === 'Other') { detailInput.classList.remove('hidden'); } 
-            else { detailInput.classList.add('hidden'); }
+            if(product === 'Other') detailInput.classList.remove('hidden');
+            else detailInput.classList.add('hidden');
 
             if (product === 'Credit Card' || product === 'Cash Card') {
                 lblQty.innerText = "จำนวน (ใบ)";
@@ -509,99 +669,6 @@
                 amountInput.disabled = false;
                 amountInput.classList.remove('bg-gray-100', 'text-gray-400');
             }
-        }
-
-        function saveActivity() {
-            const month = document.getElementById('globalMonth').value;
-            mockActivityLog.push({
-                empId: currentUser.id,
-                month: month,
-                liveDate: document.getElementById('liveDate').value || "-",
-                liveChannel: document.getElementById('liveChannel').value,
-                tiktokClips: parseInt(document.getElementById('tiktokClips').value),
-                fbPosts: parseInt(document.getElementById('fbPosts').value),
-                createdAt: new Date().toLocaleString()
-            });
-            alert(`บันทึกกิจกรรมประจำเดือน ${month} สำเร็จ!`);
-            document.getElementById('tiktokClips').value = 0;
-            document.getElementById('fbPosts').value = 0;
-        }
-
-        function saveSales() {
-            const month = document.getElementById('globalMonth').value;
-            const product = document.getElementById('productType').value;
-            const qty = parseInt(document.getElementById('salesQty').value) || 0;
-            const amount = parseInt(document.getElementById('salesAmount').value) || 0;
-            const detail = document.getElementById('otherDetail').value;
-
-            if (qty === 0 && amount === 0) {
-                alert("กรุณาระบุจำนวนหรือยอดเงิน");
-                return;
-            }
-
-            mockSalesLog.push({
-                empId: currentUser.id,
-                month: month,
-                product: product,
-                quantity: qty,
-                amount: amount,
-                detail: product === 'Other' ? detail : "",
-                createdAt: new Date().toLocaleString()
-            });
-
-            alert(`ส่งยอดขายประจำเดือน ${month} เข้าระบบสำเร็จ!`);
-            document.getElementById('salesQty').value = 0;
-            document.getElementById('salesAmount').value = 0;
-            renderDashboard();
-        }
-
-        function renderDashboard() {
-            const filterMonth = document.getElementById('dashboardFilter').value;
-            let mySales = mockSalesLog.filter(log => log.empId === currentUser.id);
-            if (filterMonth !== 'ALL') {
-                mySales = mySales.filter(log => log.month === filterMonth);
-            }
-
-            let totalThb = 0, totalCards = 0, sumAuto = 0, sumHome = 0, sumC2G = 0;
-            const tbody = document.getElementById('txLogTable');
-            tbody.innerHTML = '';
-
-            [...mySales].reverse().forEach(log => {
-                if (log.product === 'Credit Card' || log.product === 'Cash Card') {
-                    totalCards += log.quantity;
-                } else {
-                    totalThb += log.amount;
-                    if (log.product === 'Auto Loan') sumAuto += log.amount;
-                    if (log.product === 'Home Loan') sumHome += log.amount;
-                    if (log.product === 'Cash2Go') sumC2G += log.amount;
-                }
-
-                let unit = "รายการ";
-                if(log.product === 'Credit Card' || log.product === 'Cash Card') unit = "ใบ";
-                else if(log.product === 'Auto Loan') unit = "คัน";
-                else if(log.product === 'Home Loan') unit = "หลัง";
-
-                const tr = document.createElement('tr');
-                tr.className = "border-b hover:bg-gray-50";
-                tr.innerHTML = `
-                    <td class="p-2 text-gray-500">${log.createdAt.split(' ')[0]}</td>
-                    <td class="p-2 text-ttbBlue font-medium">${log.month}</td>
-                    <td class="p-2">${log.product} ${log.detail ? `(${log.detail})` : ''}</td>
-                    <td class="p-2 text-right">${log.quantity} ${unit}</td>
-                    <td class="p-2 text-right font-semibold text-gray-700">${log.amount.toLocaleString()}</td>
-                `;
-                tbody.appendChild(tr);
-            });
-
-            if(mySales.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">ยังไม่มีประวัติการคีย์ยอด</td></tr>`;
-            }
-
-            document.getElementById('dashAuto').innerText = sumAuto.toLocaleString();
-            document.getElementById('dashHome').innerText = sumHome.toLocaleString();
-            document.getElementById('dashC2G').innerText = sumC2G.toLocaleString();
-            document.getElementById('dashTotalThb').innerText = totalThb.toLocaleString();
-            document.getElementById('dashTotalCards').innerText = totalCards.toLocaleString();
         }
     </script>
 </body>
