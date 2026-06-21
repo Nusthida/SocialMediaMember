@@ -4,13 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Social Media Club - Front-end</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Prompt -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
+    <!-- นำเข้าระบบ Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
+        // ระบบแจ้งเตือนหากเผลอวางโค้ดผิดพลาด (Syntax Error)
+        window.onerror = function(message, source, lineno, colno, error) {
+            // ไม่ต้องแจ้งเตือนทุกครั้งที่เจอ Error ภายนอก แจ้งเฉพาะไฟล์นี้
+            console.error("Error at line " + lineno + ": ", message);
+        };
+
         tailwind.config = {
             theme: {
                 extend: {
@@ -26,7 +36,6 @@
         }
     </script>
     <style>
-        /* ================== CSS ของระบบโดยรวม ================== */
         body { font-family: 'Prompt', sans-serif; background-color: #F0F4F8; }
         .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 1rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -34,7 +43,6 @@
         ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
 
-        /* ================== CSS สำหรับ Member Card ที่จูนตำแหน่งไว้ ================== */
         .member-card-wrapper {
             container-type: inline-size;
             width: 100%;
@@ -131,10 +139,11 @@
 </head>
 <body class="text-gray-800">
 
+    <!-- ================== LOGIN SECTION ================== -->
     <div id="loginSection" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-ttbLightBlue to-blue-200 p-4">
         <div class="glass-card w-full max-w-md p-8 text-center">
             <div class="mb-6 flex justify-center">
-                <img src="Logo Social plain.png" alt="Social Media Club Logo" class="h-28 object-contain drop-shadow-md" onerror="this.src='https://via.placeholder.com/150?text=Logo'">
+                <img src="Logo Social plain.png" alt="SMC Logo" class="h-28 object-contain drop-shadow-md" onerror="this.src='https://via.placeholder.com/150?text=SMC'">
             </div>
             <h2 class="text-2xl font-bold text-ttbBlue mb-2">เข้าสู่ระบบ</h2>
             <p class="text-gray-500 mb-8">ระบบหน้าบ้าน สำหรับสมาชิกคลับ</p>
@@ -148,6 +157,7 @@
         </div>
     </div>
 
+    <!-- ================== MAIN APP SECTION ================== -->
     <div id="mainAppSection" class="hidden min-h-screen pb-12">
         <nav class="bg-ttbBlue text-white shadow-md sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -158,7 +168,7 @@
                     <div class="flex items-center space-x-4">
                         <div class="flex items-center space-x-2">
                             <img id="navProfilePic" src="https://ui-avatars.com/api/?name=User&background=F68B1F&color=fff" class="w-8 h-8 rounded-full border-2 border-white object-cover">
-                            <span id="navEmpName" class="font-medium hidden sm:block">ชื่อ พนักงาน</span>
+                            <span id="navEmpName" class="font-medium hidden sm:block">กำลังโหลด...</span>
                         </div>
                         <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm font-medium transition">
                             <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
@@ -171,22 +181,20 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
+                <!-- LEFT COLUMN: Profile & Card -->
                 <div class="lg:col-span-1 space-y-6">
-                    
                     <div class="member-card-wrapper">
                         <div class="member-card">
                             <img id="cardProfilePic" src="https://ui-avatars.com/api/?name=User&background=F68B1F&color=fff&size=300" alt="Profile" class="profile-img">
-                            <img src="Logo Social media 2026.png" alt="Certified Badge" class="badge-img" onerror="this.style.display='none'">
+                            <img src="Logo Social media 2026.png" alt="Badge" class="badge-img" onerror="this.style.display='none'">
 
-                            <div id="cardEmpName" class="text-name">ชื่อ นามสกุล</div>
-                            <div id="cardPositionThai" class="text-position">ตำแหน่ง</div>
-                            
-                            <div id="cardEmpId" class="text-emp-id info-group">รหัสพนักงาน</div>
-                            <div id="cardMemberId" class="text-member-id info-group">Member ID</div>
-                            <div id="cardZone" class="text-region info-group">ภาค / เขต</div>
-                            
-                            <div id="cardFb" class="text-facebook social-text">Facebook Name</div>
-                            <div id="cardTiktok" class="text-tiktok social-text">TikTok Name</div>
+                            <div id="cardEmpName" class="text-name">-</div>
+                            <div id="cardPositionThai" class="text-position">-</div>
+                            <div id="cardEmpId" class="text-emp-id info-group">-</div>
+                            <div id="cardMemberId" class="text-member-id info-group">-</div>
+                            <div id="cardZone" class="text-region info-group">-</div>
+                            <div id="cardFb" class="text-facebook social-text">-</div>
+                            <div id="cardTiktok" class="text-tiktok social-text">-</div>
                         </div>
                     </div>
 
@@ -213,8 +221,8 @@
                     </div>
                 </div>
 
+                <!-- RIGHT COLUMN: Forms & Dashboard -->
                 <div class="lg:col-span-2 space-y-6">
-                    
                     <div class="glass-card p-4 flex items-center justify-between bg-gradient-to-r from-ttbLightBlue to-white border-l-4 border-ttbBlue">
                         <div class="font-bold text-ttbBlue"><i class="fas fa-calendar-alt mr-2"></i> เลือกเดือนผลงานสำหรับบันทึกข้อมูล</div>
                         <select id="globalMonth" class="px-4 py-2 border border-blue-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ttbOrange bg-white">
@@ -365,7 +373,7 @@
                                         </tr>
                                     </thead>
                                     <tbody id="txLogTable">
-                                        </tbody>
+                                    </tbody>
                                 </table>
                             </div>
                         </div>
@@ -377,17 +385,20 @@
     </div>
 
     <script>
-        // ลิงก์ URL ของโปรเจกต์ Supabase ของคุณ
+        // =========================================================================
+        // 🔴 แก้ไข 2 บรรทัดนี้เท่านั้น! นำ URL และ API Key มาใส่ในเครื่องหมาย ' '
+        // =========================================================================
         const SUPABASE_URL = 'https://vuxawbelluvnqlyaasgf.supabase.co';
-        // 🚨 นำ Project API Keys (anon public ตัวยาว ๆ) มาแปะแทนข้อความด้านล่างนี้ 🚨
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eGF3YmVsbHV2bnFseWFhc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NTY2NjcsImV4cCI6MjA5NzUzMjY2N30.Vrp6Hs_rlT2td0DBU3zwjc1HvbUgZnRWfJA5kx-LVro"; 
-        
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eGF3YmVsbHV2bnFseWFhc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NTY2NjcsImV4cCI6MjA5NzUzMjY2N30.Vrp6Hs_rlT2td0DBU3zwjc1HvbUgZnRWfJA5kx-LVro'; 
+        // =========================================================================
+
+
+        // เปลี่ยนชื่อตัวแปรเป็น supabaseClient เพื่อป้องกันปัญหา Identifier 'supabase' has already been declared
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
         let mySalesLog = [];
 
-        // 🔐 ระบบล็อกอิน ตรวจสอบข้อมูลสิทธิ์กับฐานข้อมูลจริงหลังบ้าน
         async function handleLogin() {
             const inputId = document.getElementById('loginEmpId').value.trim();
             const btn = document.getElementById('btnLogin');
@@ -398,28 +409,24 @@
             btn.classList.add('loading');
 
             try {
-                // ยิงคำสั่งไปค้นหาแถวพนักงานตัวจริงในตาราง users
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('users')
                     .select('*')
                     .eq('id', inputId)
-                    .maybeSingle(); // ป้องกัน Error หากไม่เจอรหัส
+                    .maybeSingle();
 
-                if (error) throw error;
-
-                // 🛑 กรณีไม่เจอรหัสพนักงานในระบบหลังบ้าน
-                if (!data) {
-                    alert("ไม่พบข้อมูลสมาชิก");
+                if (error) {
+                    alert("เชื่อมต่อฐานข้อมูลล้มเหลว โปรดตรวจสอบ API Key ของคุณครับ\n\nสาเหตุ: " + error.message);
+                } else if (!data) {
+                    alert("ไม่พบข้อมูลสมาชิก (ไม่มีรหัส " + inputId + " ในระบบฐานข้อมูล)");
                 } else {
-                    // เข้าระบบสำเร็จเมื่อเจอพนักงานในฐานข้อมูล
                     currentUser = data;
                     document.getElementById('loginSection').classList.add('hidden');
                     document.getElementById('mainAppSection').classList.remove('hidden');
                     initWorkspace();
                 }
             } catch (err) {
-                console.error(err);
-                alert("เกิดปัญหาขัดข้องในการเชื่อมต่อระบบฐานข้อมูลหลังบ้าน");
+                alert("เกิดปัญหาขัดข้อง: " + err.message);
             }
             
             btn.innerText = "เข้าสู่ระบบ";
@@ -456,7 +463,6 @@
             await loadSalesData();
         }
 
-        // ระบบอัปโหลดรูปภาพเข้าพื้นที่จัดเก็บ (Cloud Storage) ของ Supabase
         document.getElementById('uploadImg').addEventListener('change', async function(e) {
             const file = e.target.files[0];
             if (!file) return;
@@ -470,19 +476,19 @@
                 const fileExt = file.name.split('.').pop();
                 const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
 
-                const { error: uploadError } = await supabase.storage
+                const { error: uploadError } = await supabaseClient.storage
                     .from('avatars')
                     .upload(fileName, file);
 
                 if (uploadError) throw uploadError;
 
-                const { data: publicUrlData } = supabase.storage
+                const { data: publicUrlData } = supabaseClient.storage
                     .from('avatars')
                     .getPublicUrl(fileName);
                 
                 const imgUrl = publicUrlData.publicUrl;
 
-                await supabase.from('users').update({ pic: imgUrl }).eq('id', currentUser.id);
+                await supabaseClient.from('users').update({ pic: imgUrl }).eq('id', currentUser.id);
 
                 document.getElementById('cardProfilePic').src = imgUrl;
                 document.getElementById('navProfilePic').src = imgUrl;
@@ -505,7 +511,7 @@
             
             btn.innerText = "กำลังบันทึก...";
             
-            const { error } = await supabase
+            const { error } = await supabaseClient
                 .from('users')
                 .update({ fb: fb, tiktok: tiktok })
                 .eq('id', currentUser.id);
@@ -527,7 +533,7 @@
             const btn = document.getElementById('btnSaveActivity');
             btn.innerText = "กำลังบันทึก...";
             
-            const { error } = await supabase.from('activity_log').insert([{
+            const { error } = await supabaseClient.from('activity_log').insert([{
                 emp_id: currentUser.id,
                 month: month,
                 live_date: document.getElementById('liveDate').value || "-",
@@ -557,7 +563,7 @@
             const btn = document.getElementById('btnSaveSales');
             btn.innerText = "กำลังส่งยอด...";
 
-            const { error } = await supabase.from('sales_log').insert([{
+            const { error } = await supabaseClient.from('sales_log').insert([{
                 emp_id: currentUser.id,
                 month: month,
                 product: product,
@@ -578,7 +584,7 @@
         }
 
         async function loadSalesData() {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseClient
                 .from('sales_log')
                 .select('*')
                 .eq('emp_id', currentUser.id)
