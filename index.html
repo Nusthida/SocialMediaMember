@@ -20,7 +20,7 @@
 
     <script>
         // ==========================================
-        // 1. ตั้งค่าฐานข้อมูล Supabase 
+        // 1. ตั้งค่าฐานข้อมูล Supabase (แก้ไขตรงนี้ให้เป็น Key ของคุณ)
         // ==========================================
         var SUPABASE_URL = 'https://vuxawbelluvnqlyaasgf.supabase.co';
         var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eGF3YmVsbHV2bnFseWFhc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NTY2NjcsImV4cCI6MjA5NzUzMjY2N30.Vrp6Hs_rlT2td0DBU3zwjc1HvbUgZnRWfJA5kx-LVro';
@@ -36,19 +36,95 @@
             <p class="text-sm text-gray-500 mb-6">Social Media Club Member Portal</p>
             
             <input type="text" id="empId" placeholder="รหัสพนักงาน (เช่น 10001)" class="w-full px-4 py-3 border rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <input type="password" id="empPin" placeholder="รหัส PIN 5 หลัก (ถ้ามี)" class="w-full px-4 py-3 border rounded-xl mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="empPin" placeholder="รหัส PIN 5 หลัก (หากลงทะเบียนแล้ว)" class="w-full px-4 py-3 border rounded-xl mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
             
             <button onclick="handleLogin()" class="w-full bg-ttb-blue text-white font-bold py-3 rounded-xl hover:bg-blue-800 transition shadow-md">
                 เข้าสู่ระบบ
             </button>
             <p id="loginError" class="text-red-500 text-sm mt-4 hidden"></p>
+
+            <div class="border-t mt-6 pt-4">
+                <p class="text-sm text-gray-500">ยังไม่เคยลงทะเบียนในระบบ ใช่หรือไม่?</p>
+                <button onclick="showSection('registerSection')" class="mt-2 text-sm text-orange-500 font-bold hover:underline">
+                    ✨ คลิกที่นี่เพื่อลงทะเบียนสมาชิกใหม่
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="registerSection" class="hidden min-h-screen flex items-center justify-center bg-gray-100 p-4">
+        <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-lg">
+            <h2 class="text-2xl font-bold ttb-blue text-center mb-2">ลงทะเบียนสมาชิกใหม่</h2>
+            <p class="text-sm text-gray-500 text-center mb-6">กรอกข้อมูลเพื่อส่งให้ Admin อนุมัติเข้าใช้งาน</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">รหัสพนักงาน *</label>
+                    <input type="text" id="regId" placeholder="เช่น 10001" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">คำนำหน้า *</label>
+                    <select id="regPrefix" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="นาย">นาย</option>
+                        <option value="นาง">นาง</option>
+                        <option value="นางสาว">นางสาว</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">ชื่อจริง *</label>
+                    <input type="text" id="regFirstName" placeholder="ชื่อ" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">นามสกุล *</label>
+                    <input type="text" id="regLastName" placeholder="นามสกุล" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">ตำแหน่ง *</label>
+                    <select id="regPosition" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="CLSA">CLSA</option>
+                        <option value="CFSA">CFSA</option>
+                        <option value="CLSM">CLSM</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">เขต (Zone)</label>
+                    <input type="text" id="regZone" placeholder="เช่น เขต 1" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">ภาค (RH)</label>
+                    <input type="text" id="regRH" placeholder="เช่น RH 1" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">รุ่น (Gen)</label>
+                    <input type="text" id="regGen" placeholder="เช่น รุ่น 1" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">ชื่อช่อง Facebook</label>
+                    <input type="text" id="regFb" placeholder="ชื่อช่อง FB" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-bold text-gray-700 mb-1">ชื่อช่อง TikTok</label>
+                    <input type="text" id="regTiktok" placeholder="ชื่อช่อง TikTok" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-bold text-gray-700 mb-1">ทีม CLSM</label>
+                    <input type="text" id="regTeamClsm" placeholder="ระบุทีม (ถ้ามี)" class="w-full px-3 py-2 border rounded-xl outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+            </div>
+            
+            <button onclick="handleRegister()" class="w-full bg-ttb-orange text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition shadow-md mt-6">
+                ส่งข้อมูลลงทะเบียน
+            </button>
+            <button onclick="showSection('loginSection')" class="w-full text-sm text-gray-500 hover:underline mt-4 text-center block">
+                มีบัญชีแล้ว? กลับไปหน้าเข้าสู่ระบบ
+            </button>
         </div>
     </div>
 
     <div id="pinSection" class="hidden min-h-screen flex items-center justify-center bg-gray-100 p-4">
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
             <h2 class="text-xl font-bold ttb-blue mb-2">ตั้งรหัส PIN ของคุณ</h2>
-            <p class="text-sm text-gray-500 mb-6">เนื่องจากการเข้าใช้งานครั้งแรก กรุณาตั้งรหัสผ่าน 5 หลัก</p>
+            <p class="text-sm text-gray-500 mb-6">เนื่องจากการเข้าใช้งานครั้งแรก กรุณาตั้งรหัสผ่าน 5 หลัก เพื่อความปลอดภัย</p>
             <input type="password" id="newPin" maxlength="5" placeholder="ตั้งรหัส PIN 5 หลัก" class="w-full px-4 py-3 border rounded-xl mb-4 text-center tracking-widest text-lg">
             <button onclick="saveNewPin()" class="w-full bg-ttb-orange text-white font-bold py-3 rounded-xl hover:bg-orange-600 transition shadow-md">
                 บันทึกรหัส PIN
@@ -60,7 +136,7 @@
         <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md text-center">
             <div class="text-yellow-500 text-6xl mb-4">⏳</div>
             <h2 class="text-xl font-bold text-gray-800 mb-2">บัญชีของคุณกำลังรอการอนุมัติ</h2>
-            <p class="text-gray-500 mb-6">กรุณารอผู้ดูแลระบบ (Admin) กดอนุมัติบัญชีของคุณก่อนจึงจะสามารถบันทึกยอดขายได้ครับ</p>
+            <p class="text-gray-500 mb-6">กรุณารอผู้ดูแลระบบ (Admin) กดอนุมัติบัญชีของคุณก่อน จึงจะสามารถบันทึกข้อมูลได้ครับ</p>
             <button onclick="logout()" class="text-blue-600 underline font-medium">กลับไปหน้าล็อกอิน</button>
         </div>
     </div>
@@ -95,7 +171,6 @@
         </div>
 
         <div class="p-6 flex-grow max-w-4xl w-full mx-auto">
-            
             <div id="content-dashboard" class="space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                     <h3 class="text-lg font-bold ttb-blue mb-4">สรุปผลงานส่วนตัว</h3>
@@ -170,4 +245,299 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-sm font-bold text-gray-700 mb-1">เดือนผลงาน</label>
-                            <select id
+                            <select id="activityMonth" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="2026-01">มกราคม 2026</option>
+                                <option value="2026-02">กุมภาพันธ์ 2026</option>
+                                <option value="2026-03">มีนาคม 2026</option>
+                                <option value="2026-04">เมษายน 2026</option>
+                                <option value="2026-05">พฤษภาคม 2026</option>
+                                <option value="2026-06">มิถุนายน 2026</option>
+                                <option value="2026-07">กรกฎาคม 2026</option>
+                                <option value="2026-08">สิงหาคม 2026</option>
+                                <option value="2026-09">กันยายน 2026</option>
+                                <option value="2026-10">ตุลาคม 2026</option>
+                                <option value="2026-11">พฤศจิกายน 2026</option>
+                                <option value="2026-12">ธันวาคม 2026</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">วัน-เวลาที่ Live</label>
+                            <input type="datetime-local" id="actDate" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-1">ช่องทางที่ Live</label>
+                            <select id="actChannel" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                                <option value="Tiktok">TikTok</option>
+                                <option value="Facebook">Facebook</option>
+                                <option value="Other">อื่นๆ</option>
+                            </select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">จำนวนคลิป TikTok</label>
+                                <input type="number" id="actTiktok" placeholder="0" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-1">จำนวนโพสต์ FB</label>
+                                <input type="number" id="actFb" placeholder="0" class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 outline-none">
+                            </div>
+                        </div>
+                        <button onclick="submitActivity()" class="w-full bg-ttb-orange text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition mt-4 shadow-sm">
+                            บันทึกกิจกรรม
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ฟังก์ชันช่วยสลับหน้าต่างกวาดสายตาเบราว์เซอร์
+        function showSection(sectionId) {
+            const sections = ['loginSection', 'registerSection', 'pinSection', 'pendingSection', 'mainAppSection'];
+            sections.forEach(s => {
+                const el = document.getElementById(s);
+                if (el) el.classList.add('hidden');
+            });
+            document.getElementById(sectionId).classList.remove('hidden');
+        }
+
+        // --- 1. ระบบยืนยันตัวตนล็อกอิน ---
+        async function handleLogin() {
+            const empId = document.getElementById('empId').value.trim();
+            const empPin = document.getElementById('empPin').value.trim();
+            const errorMsg = document.getElementById('loginError');
+            errorMsg.classList.add('hidden');
+
+            if(!empId) {
+                errorMsg.innerText = "กรุณากรอกรหัสพนักงาน";
+                errorMsg.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase.from('users').select('*').eq('id', empId).single();
+
+                if (error || !data) {
+                    errorMsg.innerText = "ไม่พบรหัสพนักงานในระบบ กรุณากดลงทะเบียนสมาชิกใหม่ด้านล่าง";
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+
+                // กรณีไม่มี PIN (สมัครแล้วแต่เข้าครั้งแรก)
+                if (!data.pin) {
+                    currentUser = data;
+                    showSection('pinSection');
+                    return;
+                }
+
+                // ตรวจสอบ PIN
+                if (data.pin !== empPin) {
+                    errorMsg.innerText = "รหัส PIN ไม่ถูกต้อง!";
+                    errorMsg.classList.remove('hidden');
+                    return;
+                }
+
+                currentUser = data;
+
+                // ตรวจสอบสถานะการรออนุมัติ
+                if (data.status === 'pending') {
+                    showSection('pendingSection');
+                    return;
+                }
+
+                proceedToApp();
+
+            } catch (err) {
+                console.error(err);
+                alert("เกิดข้อผิดพลาดในการเชื่อมต่อฐานข้อมูล กรุณาเช็กการใส่ URL และ API Key ที่บรรทัด 26-27");
+            }
+        }
+
+        // --- 2. ระบบลงทะเบียนพนักงานใหม่ ---
+        async function handleRegister() {
+            const id = document.getElementById('regId').value.trim();
+            const prefix = document.getElementById('regPrefix').value;
+            const firstName = document.getElementById('regFirstName').value.trim();
+            const lastName = document.getElementById('regLastName').value.trim();
+            const position = document.getElementById('regPosition').value;
+            const zone = document.getElementById('regZone').value.trim();
+            const rh = document.getElementById('regRH').value.trim();
+            const gen = document.getElementById('regGen').value.trim();
+            const fb = document.getElementById('regFb').value.trim();
+            const tiktok = document.getElementById('regTiktok').value.trim();
+            const teamClsm = document.getElementById('regTeamClsm').value.trim();
+
+            if(!id || !firstName || !lastName) {
+                alert("กรุณากรอกข้อมูลช่องที่มีเครื่องหมายดาว (*) ให้ครบถ้วน");
+                return;
+            }
+
+            const fullName = prefix + " " + firstName + " " + lastName;
+
+            const payload = {
+                id: id,
+                name: fullName,
+                position_code: position,
+                zone: zone || null,
+                rh: rh || null,
+                gen: gen || null,
+                fb_name: fb || null,
+                tiktok_name: tiktok || null,
+                team_clsm: teamClsm || null,
+                status: 'pending', // สมัครใหม่เป็น pending ทันที
+                is_resigned: false,
+                pin: null
+            };
+
+            try {
+                const { error } = await supabase.from('users').insert([payload]);
+                if(error) {
+                    alert("ลงทะเบียนไม่สำเร็จ: " + error.message);
+                } else {
+                    alert("ลงทะเบียนสำเร็จ! กรุณาแจ้ง Admin ของคุณเพื่อทำการอนุมัติเข้าใช้งานระบบ");
+                    // เคลียร์ค่าฟอร์ม
+                    document.getElementById('regId').value = '';
+                    document.getElementById('regFirstName').value = '';
+                    document.getElementById('regLastName').value = '';
+                    showSection('loginSection');
+                }
+            } catch(err) {
+                console.error(err);
+                alert("เกิดข้อผิดพลาดในการรับส่งข้อมูลโครงสร้างฐานข้อมูล");
+            }
+        }
+
+        // --- 3. บันทึก PIN ในการล็อกอินครั้งแรก ---
+        async function saveNewPin() {
+            const newPin = document.getElementById('newPin').value.trim();
+            if(newPin.length !== 5 || isNaN(newPin)) return alert("กรุณาตั้งรหัส PIN เป็นตัวเลขให้ครบ 5 หลัก");
+
+            const { error } = await supabase.from('users').update({ pin: newPin }).eq('id', currentUser.id);
+            if(error) return alert("ตั้ง PIN ไม่สำเร็จ: " + error.message);
+
+            alert("ตั้งรหัส PIN สำเร็จ! กรุณาจำรหัสนี้ไว้ใช้ในระบบล็อกอิน");
+            currentUser.pin = newPin;
+            
+            if (currentUser.status === 'pending') {
+                showSection('pendingSection');
+            } else {
+                proceedToApp();
+            }
+        }
+
+        // --- 4. ดึงข้อมูลขึ้นระบบเมื่อประเมินผ่าน ---
+        function proceedToApp() {
+            showSection('mainAppSection');
+            
+            document.getElementById('profileName').innerText = currentUser.name || 'พนักงาน SMC';
+            document.getElementById('profileId').innerText = currentUser.id;
+            document.getElementById('profilePosition').innerText = currentUser.position_code || '-';
+            document.getElementById('profileZone').innerText = currentUser.zone || '-';
+            document.getElementById('profileRH').innerText = currentUser.rh || '-';
+
+            // จัดการ Badge สถานะ พนักงาน/ลาออก
+            const statusBadge = document.getElementById('profileStatusBadge');
+            if (currentUser.is_resigned === true) {
+                statusBadge.innerText = "● สถานะ: ลาออกแล้ว";
+                statusBadge.className = "px-4 py-1.5 rounded-full text-sm font-bold shadow-sm mb-2 bg-red-100 text-red-700";
+            } else {
+                statusBadge.innerText = "● สถานะ: พนักงานปัจจุบัน";
+                statusBadge.className = "px-4 py-1.5 rounded-full text-sm font-bold shadow-sm mb-2 bg-green-100 text-green-700";
+            }
+
+            // จัดการเวลาเริ่มต้น
+            const today = new Date();
+            const currentMonthStr = today.getFullYear() + "-" + String(today.getMonth() + 1).padStart(2, '0');
+            document.getElementById('salesMonth').value = currentMonthStr;
+            document.getElementById('activityMonth').value = currentMonthStr;
+
+            loadMyDashboard();
+        }
+
+        function logout() {
+            currentUser = null;
+            showSection('loginSection');
+            document.getElementById('empId').value = '';
+            document.getElementById('empPin').value = '';
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['dashboard', 'sales', 'activity'];
+            tabs.forEach(t => {
+                document.getElementById('content-' + t).classList.add('hidden');
+                document.getElementById('tab-' + t).classList.remove('tab-active');
+                document.getElementById('tab-' + t).classList.add('text-gray-500');
+            });
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            document.getElementById('tab-' + tabName).classList.add('tab-active');
+            document.getElementById('tab-' + tabName).classList.remove('text-gray-500');
+
+            if(tabName === 'dashboard') loadMyDashboard();
+        }
+
+        async function loadMyDashboard() {
+            if(!currentUser) return;
+            const { data, error } = await supabase.from('sales_log').select('*').eq('employee_id', currentUser.id);
+            if(error) return;
+
+            let totalAmt = 0;
+            let totalCard = 0;
+            
+            data.forEach(s => {
+                const amt = Number(s.amount_thb) || 0;
+                const qty = Number(s.quantity) || 0;
+                if(s.product_type === 'บัตรเครดิต' || s.product_type === 'บัตรกดเงินสด') {
+                    totalCard += qty;
+                } else {
+                    totalAmt += amt;
+                }
+            });
+
+            document.getElementById('dashTotalAmt').innerText = totalAmt.toLocaleString();
+            document.getElementById('dashTotalCard').innerText = totalCard.toLocaleString();
+        }
+
+        async function submitSales() {
+            const payload = {
+                employee_id: currentUser.id,
+                target_month: document.getElementById('salesMonth').value,
+                product_type: document.getElementById('salesProduct').value,
+                quantity: document.getElementById('salesQty').value || 0,
+                amount_thb: document.getElementById('salesAmt').value || 0
+            };
+
+            const { error } = await supabase.from('sales_log').insert([payload]);
+            if(error) {
+                alert('บันทึกไม่สำเร็จ: ' + error.message);
+            } else {
+                alert('บันทึกยอดขายเรียบร้อยแล้ว!');
+                document.getElementById('salesQty').value = '';
+                document.getElementById('salesAmt').value = '';
+                loadMyDashboard();
+            }
+        }
+
+        async function submitActivity() {
+            const payload = {
+                employee_id: currentUser.id,
+                target_month: document.getElementById('activityMonth').value,
+                live_datetime: document.getElementById('actDate').value || null,
+                live_channel: document.getElementById('actChannel').value,
+                tiktok_clips: document.getElementById('actTiktok').value || 0,
+                fb_posts: document.getElementById('actFb').value || 0
+            };
+
+            const { error } = await supabase.from('activity_log').insert([payload]);
+            if(error) {
+                alert('บันทึกไม่สำเร็จ: ' + error.message);
+            } else {
+                alert('บันทึกกิจกรรมเรียบร้อยแล้ว!');
+                document.getElementById('actDate').value = '';
+                document.getElementById('actTiktok').value = '';
+                document.getElementById('actFb').value = '';
+            }
+        }
+    </script>
+</body>
+</html>
