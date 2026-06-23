@@ -4,23 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Social Media Club - Front-end</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Prompt -->
     <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <!-- FontAwesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- นำเข้าระบบ Supabase JS Library -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <script>
-        // ระบบแจ้งเตือนหากเผลอวางโค้ดผิดพลาด (Syntax Error)
-        window.onerror = function(message, source, lineno, colno, error) {
-            // ไม่ต้องแจ้งเตือนทุกครั้งที่เจอ Error ภายนอก แจ้งเฉพาะไฟล์นี้
-            console.error("Error at line " + lineno + ": ", message);
-        };
-
         tailwind.config = {
             theme: {
                 extend: {
@@ -62,102 +51,140 @@
             overflow: hidden;
         }
 
-        .profile-img {
-            position: absolute;
-            top: 33%;
-            left: 7.2%;
-            width: 20.0%;
-            height: 44%;
-            object-fit: cover;
-            border-radius: 10px;
-            background-color: #ffffff;
-            z-index: 1;
-        }
-
-        .badge-img {
-            position: absolute;
-            top: 65%;
-            left: 10%;
-            width: 15%;
-            z-index: 2;
-        }
-
-        .text-name {
-            position: absolute;
-            top: 31%;
-            left: 32%;
-            color: #003366;
-            font-size: 4.5cqi;
-            font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 65%;
-        }
-
-        .text-position {
-            position: absolute;
-            top: 41.5%;
-            left: 32%;
-            color: #D97736;
-            font-size: 2.2cqi;
-            font-weight: 600;
-        }
-
-        .info-group {
-            position: absolute;
-            color: #003366;
-            font-size: 1.8cqi;
-            font-weight: 700;
-            display: flex;
-            flex-direction: column;
-            gap: 1.5cqi;
-            white-space: nowrap;
-        }
-
+        .profile-img { position: absolute; top: 33%; left: 7.2%; width: 20.0%; height: 44%; object-fit: cover; border-radius: 10px; background-color: #ffffff; z-index: 1; }
+        .badge-img { position: absolute; top: 65%; left: 10%; width: 15%; z-index: 2; }
+        .text-name { position: absolute; top: 31%; left: 32%; color: #003366; font-size: 4.5cqi; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%; }
+        .text-position { position: absolute; top: 41.5%; left: 32%; color: #D97736; font-size: 2.2cqi; font-weight: 600; }
+        .info-group { position: absolute; color: #003366; font-size: 1.8cqi; font-weight: 700; display: flex; flex-direction: column; gap: 1.5cqi; white-space: nowrap; }
         .text-emp-id { top: 49.5%; left: 48%; }
         .text-member-id { top: 53.5%; left: 48%; }
         .text-region { top: 57.5%; left: 48%; }
-
-        .social-text {
-            position: absolute;
-            top: 78.5%;
-            color: #003366;
-            font-size: 1.8cqi;
-            font-weight: 700;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 25%;
-        }
-
+        .social-text { position: absolute; top: 78.5%; color: #003366; font-size: 1.8cqi; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 25%; }
         .text-facebook { left: 35%; }
         .text-tiktok { left: 70%; }
         
         .loading { opacity: 0.6; cursor: not-allowed; }
+        
+        /* สไตล์สำหรับช่องกรอก PIN */
+        .pin-input {
+            letter-spacing: 1em;
+            text-align: center;
+            font-size: 1.5rem;
+        }
     </style>
 </head>
 <body class="text-gray-800">
 
-    <!-- ================== LOGIN SECTION ================== -->
-    <div id="loginSection" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-ttbLightBlue to-blue-200 p-4">
-        <div class="glass-card w-full max-w-md p-8 text-center">
+    <!-- ================== LOGIN / REGISTER SECTION ================== -->
+    <div id="authSection" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-ttbLightBlue to-blue-200 p-4 relative">
+        <div class="glass-card w-full max-w-md p-8 text-center transition-all duration-300">
+            
             <div class="mb-6 flex justify-center">
                 <img src="Logo Social plain.png" alt="SMC Logo" class="h-28 object-contain drop-shadow-md" onerror="this.src='https://via.placeholder.com/150?text=SMC'">
             </div>
-            <h2 class="text-2xl font-bold text-ttbBlue mb-2">เข้าสู่ระบบ</h2>
-            <p class="text-gray-500 mb-8">ระบบหน้าบ้าน สำหรับสมาชิกคลับ</p>
             
-            <div class="mb-6">
-                <input type="text" id="loginEmpId" placeholder="กรอกรหัสพนักงานของคุณ" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ttbOrange text-center text-lg font-medium">
+            <!-- หน้าเลือก เข้าสู่ระบบ / ลงทะเบียน -->
+            <div id="authMenuMode">
+                <h2 class="text-2xl font-bold text-ttbBlue mb-2">ยินดีต้อนรับสู่ระบบสมาชิก</h2>
+                <p class="text-gray-500 mb-8 text-sm">Social Media Club</p>
+                
+                <div class="space-y-4">
+                    <button onclick="switchAuthMode('login')" class="w-full bg-ttbBlue hover:bg-blue-900 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                        เข้าสู่ระบบ (สำหรับสมาชิกเดิม)
+                    </button>
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-gray-300"></div>
+                        <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">หรือ</span>
+                        <div class="flex-grow border-t border-gray-300"></div>
+                    </div>
+                    <button onclick="switchAuthMode('register_check')" class="w-full bg-white border-2 border-ttbOrange text-ttbOrange hover:bg-orange-50 font-bold py-3 px-4 rounded-lg transition shadow-sm">
+                        ลงทะเบียนผู้ใช้ใหม่
+                    </button>
+                </div>
             </div>
-            <button id="btnLogin" onclick="handleLogin()" class="w-full bg-ttbBlue hover:bg-blue-900 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-md">
-                เข้าสู่ระบบ
-            </button>
+
+            <!-- หน้า Login -->
+            <div id="loginMode" class="hidden">
+                <button onclick="switchAuthMode('menu')" class="absolute top-4 left-4 text-gray-500 hover:text-ttbBlue">
+                    <i class="fas fa-arrow-left"></i> กลับ
+                </button>
+                <h2 class="text-2xl font-bold text-ttbBlue mb-6">เข้าสู่ระบบ</h2>
+                
+                <div class="space-y-4 mb-6 text-left">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">รหัสพนักงาน</label>
+                        <input type="text" id="loginEmpId" placeholder="เช่น 10001" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-ttbBlue text-center font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">รหัส PIN (5 หลัก)</label>
+                        <input type="password" id="loginPin" maxlength="5" placeholder="•••••" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-ttbBlue pin-input font-mono">
+                    </div>
+                </div>
+                
+                <button id="btnLogin" onclick="handleLogin()" class="w-full bg-ttbBlue hover:bg-blue-900 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                    เข้าสู่ระบบ
+                </button>
+            </div>
+
+            <!-- หน้า ลงทะเบียน (เช็กรหัส) -->
+            <div id="registerCheckMode" class="hidden">
+                <button onclick="switchAuthMode('menu')" class="absolute top-4 left-4 text-gray-500 hover:text-ttbBlue">
+                    <i class="fas fa-arrow-left"></i> กลับ
+                </button>
+                <h2 class="text-2xl font-bold text-ttbOrange mb-2">ลงทะเบียนผู้ใช้ใหม่</h2>
+                <p class="text-gray-500 mb-6 text-sm">กรุณากรอกรหัสพนักงานเพื่อตรวจสอบข้อมูลเบื้องต้น</p>
+                
+                <div class="mb-6">
+                    <input type="text" id="regCheckEmpId" onkeypress="if(event.key === 'Enter') checkEmployeeForRegister()" placeholder="กรอกรหัสพนักงานของคุณ" class="w-full px-4 py-3 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ttbOrange text-center text-lg font-medium bg-orange-50">
+                </div>
+                <button id="btnRegCheck" onclick="checkEmployeeForRegister()" class="w-full bg-ttbOrange hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                    ตรวจสอบข้อมูล
+                </button>
+            </div>
+
+            <!-- หน้า ลงทะเบียน (ตั้ง PIN และข้อมูล) -->
+            <div id="registerFormMode" class="hidden">
+                <h2 class="text-xl font-bold text-ttbOrange mb-4">สร้างบัญชีผู้ใช้งาน</h2>
+                
+                <div class="bg-orange-50 rounded-lg p-3 mb-4 text-left border border-orange-100">
+                    <p class="text-sm font-bold text-ttbBlue">ข้อมูลของคุณในระบบส่วนกลาง:</p>
+                    <p class="text-xs text-gray-600 mt-1">ชื่อ: <span id="lblRegName" class="font-semibold">-</span></p>
+                    <p class="text-xs text-gray-600">ตำแหน่ง: <span id="lblRegPosition" class="font-semibold">-</span></p>
+                </div>
+
+                <div class="space-y-4 mb-6 text-left">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">ตั้งรหัส PIN (ตัวเลข 5 หลัก)</label>
+                        <input type="password" id="regPin1" maxlength="5" placeholder="ตัวเลข 5 หลัก" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-ttbOrange pin-input font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">ยืนยันรหัส PIN อีกครั้ง</label>
+                        <input type="password" id="regPin2" maxlength="5" placeholder="ตัวเลข 5 หลัก" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-ttbOrange pin-input font-mono">
+                    </div>
+                </div>
+                
+                <button id="btnRegisterFinal" onclick="submitRegistration()" class="w-full bg-ttbOrange hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                    ยืนยันการลงทะเบียน
+                </button>
+            </div>
+
+            <!-- หน้า รออนุมัติ -->
+            <div id="pendingMode" class="hidden">
+                <button onclick="switchAuthMode('menu')" class="absolute top-4 left-4 text-gray-500 hover:text-ttbBlue">
+                    <i class="fas fa-home"></i> หน้าแรก
+                </button>
+                <div class="text-orange-500 text-5xl mb-4"><i class="fas fa-clock"></i></div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">บัญชีอยู่ระหว่างรออนุมัติ</h2>
+                <p class="text-gray-600 mb-6 text-sm leading-relaxed">
+                    คุณได้ทำการลงทะเบียนเรียบร้อยแล้ว<br>ขณะนี้กำลังรอให้ผู้ดูแลระบบ (Admin) ตรวจสอบและอนุมัติสิทธิ์การเข้าใช้งานของคุณครับ
+                </p>
+            </div>
+
         </div>
     </div>
 
     <!-- ================== MAIN APP SECTION ================== -->
+    <!-- (ส่วนการแสดงผล Dashboard เหมือนเดิม) -->
     <div id="mainAppSection" class="hidden min-h-screen pb-12">
         <nav class="bg-ttbBlue text-white shadow-md sticky top-0 z-50">
             <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -310,21 +337,6 @@
                         </div>
                     </div>
 
-                    <div class="bg-white border border-blue-100 rounded-lg p-4 shadow-sm text-[11px] text-gray-600 leading-relaxed grid grid-cols-1 sm:grid-cols-2 gap-x-4">
-                        <div class="col-span-full font-bold text-ttbBlue mb-2 border-b pb-1"><i class="fas fa-book-open mr-1"></i> คำอธิบายและการจัดหมวดหมู่ผลิตภัณฑ์:</div>
-                        <ul class="space-y-1">
-                            <li><span class="font-semibold text-gray-800">Auto Loan:</span> ex. CYC, CYB</li>
-                            <li><span class="font-semibold text-gray-800">Home Loan:</span> ex. HL</li>
-                            <li><span class="font-semibold text-gray-800">C2G:</span> ex. C2G / WelFare / Cash Chill Chill / Cash Tr</li>
-                            <li><span class="font-semibold text-gray-800">Credit card:</span> ex. ttb so fast, ttb so smart, ttb Disney</li>
-                        </ul>
-                        <ul class="space-y-1 mt-1 sm:mt-0">
-                            <li><span class="font-semibold text-gray-800">BA Life:</span> ex. Smile Home, Smile car</li>
-                            <li><span class="font-semibold text-gray-800">BA Non life:</span> ex. Sabaijai Pa, Motor warrantee</li>
-                            <li><span class="font-semibold text-gray-800">Cash card:</span> ex. Flash card</li>
-                        </ul>
-                    </div>
-
                     <div class="glass-card p-6 border-t-4 border-gray-400">
                         <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
                             <h3 class="font-bold text-ttbBlue"><i class="fas fa-chart-pie mr-2"></i> สรุปผลงานของฉัน (My Dashboard)</h3>
@@ -386,27 +398,84 @@
 
     <script>
         // =========================================================================
-        // 🔴 แก้ไข 2 บรรทัดนี้เท่านั้น! นำ URL และ API Key มาใส่ในเครื่องหมาย ' '
-        // =========================================================================
+        // 🔴🔴🔴 นำ URL และ API Key มาใส่ตรงนี้ครับ 🔴🔴🔴
         const SUPABASE_URL = 'https://vuxawbelluvnqlyaasgf.supabase.co';
         const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eGF3YmVsbHV2bnFseWFhc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NTY2NjcsImV4cCI6MjA5NzUzMjY2N30.Vrp6Hs_rlT2td0DBU3zwjc1HvbUgZnRWfJA5kx-LVro'; 
         // =========================================================================
 
-
-        // เปลี่ยนชื่อตัวแปรเป็น supabaseClient เพื่อป้องกันปัญหา Identifier 'supabase' has already been declared
         const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         let currentUser = null;
         let mySalesLog = [];
+        let tempRegUser = null; 
 
-        async function handleLogin() {
-            const inputId = document.getElementById('loginEmpId').value.trim();
-            const btn = document.getElementById('btnLogin');
+        function switchAuthMode(mode) {
+            document.getElementById('authMenuMode').classList.add('hidden');
+            document.getElementById('loginMode').classList.add('hidden');
+            document.getElementById('registerCheckMode').classList.add('hidden');
+            document.getElementById('registerFormMode').classList.add('hidden');
+            document.getElementById('pendingMode').classList.add('hidden');
+
+            if(mode === 'menu') document.getElementById('authMenuMode').classList.remove('hidden');
+            else if(mode === 'login') document.getElementById('loginMode').classList.remove('hidden');
+            else if(mode === 'register_check') document.getElementById('registerCheckMode').classList.remove('hidden');
+            else if(mode === 'register_form') document.getElementById('registerFormMode').classList.remove('hidden');
+            else if(mode === 'pending') document.getElementById('pendingMode').classList.remove('hidden');
+        }
+
+        // --- เพิ่มระบบดักจับ Error และแจ้งเตือนให้ชัดเจน ---
+        async function checkEmployeeForRegister() {
+            const inputId = document.getElementById('regCheckEmpId').value.trim();
+            const btn = document.getElementById('btnRegCheck');
             
             if(!inputId) return alert("กรุณากรอกรหัสพนักงาน");
             
+            // 💡 เปลี่ยนข้อความปุ่ม เพื่อให้ผู้ใช้รู้ว่ากำลังโหลด
+            const originalText = btn.innerText;
+            btn.innerText = "กำลังค้นหาข้อมูลในระบบ...";
+            btn.disabled = true;
+
+            try {
+                // วิ่งไปเช็กใน Supabase
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('id', inputId)
+                    .maybeSingle();
+
+                if (error) {
+                    alert("เชื่อมต่อฐานข้อมูลล้มเหลว โปรดตรวจสอบว่าคุณใส่ API Key ครบถ้วนแล้วหรือไม่\n\nรายละเอียด: " + error.message);
+                } else if (!data) {
+                    alert("คุณไม่มีสิทธิ (ไม่พบรหัสพนักงานนี้ในฐานระบบส่วนกลาง)");
+                } else if (data.pin && data.pin.trim() !== "") {
+                    alert("รหัสพนักงานนี้มีการลงทะเบียนไปแล้ว!\nหากลืมรหัส PIN กรุณาติดต่อผู้ดูแลระบบ");
+                } else {
+                    // เจอคน และยังไม่เคยตั้ง PIN เปลี่ยนไปหน้าตั้งรหัส
+                    tempRegUser = data;
+                    document.getElementById('lblRegName').innerText = data.name || '-';
+                    document.getElementById('lblRegPosition').innerText = data.position_code || '-';
+                    switchAuthMode('register_form');
+                }
+            } catch (err) {
+                console.error("เกิดข้อผิดพลาด:", err);
+                alert("แอปพลิเคชันขัดข้อง โปรดตรวจสอบ Console (F12)\n" + err.message);
+            }
+            
+            // 💡 รีเซ็ตปุ่มกลับมาเหมือนเดิม
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+
+        async function handleLogin() {
+            const inputId = document.getElementById('loginEmpId').value.trim();
+            const inputPin = document.getElementById('loginPin').value.trim();
+            const btn = document.getElementById('btnLogin');
+            
+            if(!inputId) return alert("กรุณากรอกรหัสพนักงาน");
+            if(inputPin.length !== 5) return alert("กรุณากรอกรหัส PIN ให้ครบ 5 หลัก");
+            
             btn.innerText = "กำลังตรวจสอบสิทธิ์...";
-            btn.classList.add('loading');
+            btn.disabled = true;
 
             try {
                 const { data, error } = await supabaseClient
@@ -416,28 +485,78 @@
                     .maybeSingle();
 
                 if (error) {
-                    alert("เชื่อมต่อฐานข้อมูลล้มเหลว โปรดตรวจสอบ API Key ของคุณครับ\n\nสาเหตุ: " + error.message);
+                    alert("เชื่อมต่อฐานข้อมูลล้มเหลว โปรดตรวจสอบ API Key\n" + error.message);
                 } else if (!data) {
-                    alert("ไม่พบข้อมูลสมาชิก (ไม่มีรหัส " + inputId + " ในระบบฐานข้อมูล)");
+                    alert("คุณไม่มีสิทธิ (ไม่พบรหัสพนักงานในระบบส่วนกลาง)");
                 } else {
-                    currentUser = data;
-                    document.getElementById('loginSection').classList.add('hidden');
-                    document.getElementById('mainAppSection').classList.remove('hidden');
-                    initWorkspace();
+                    if (!data.pin) {
+                        alert("คุณยังไม่ได้ลงทะเบียนผู้ใช้งาน\nกรุณาไปที่เมนู 'ลงทะเบียนผู้ใช้ใหม่' ก่อนครับ");
+                    } else if (data.pin !== inputPin) {
+                        alert("รหัส PIN ไม่ถูกต้อง");
+                        document.getElementById('loginPin').value = '';
+                    } else if (data.status === 'pending') {
+                        switchAuthMode('pending'); 
+                    } else if (data.status === 'rejected') {
+                        alert("บัญชีของคุณถูกระงับ/ไม่อนุมัติการเข้าใช้งาน");
+                    } else {
+                        currentUser = data;
+                        document.getElementById('authSection').classList.add('hidden');
+                        document.getElementById('mainAppSection').classList.remove('hidden');
+                        initWorkspace();
+                    }
                 }
             } catch (err) {
                 alert("เกิดปัญหาขัดข้อง: " + err.message);
             }
             
             btn.innerText = "เข้าสู่ระบบ";
-            btn.classList.remove('loading');
+            btn.disabled = false;
         }
 
+        async function submitRegistration() {
+            const pin1 = document.getElementById('regPin1').value;
+            const pin2 = document.getElementById('regPin2').value;
+            const btn = document.getElementById('btnRegisterFinal');
+
+            if(pin1.length !== 5 || !/^\d+$/.test(pin1)) {
+                return alert("กรุณาตั้งรหัส PIN เป็นตัวเลข 5 หลักเท่านั้น");
+            }
+            if(pin1 !== pin2) {
+                return alert("รหัส PIN ทั้งสองช่องไม่ตรงกัน!");
+            }
+
+            btn.innerText = "กำลังบันทึกข้อมูล...";
+            btn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update({ 
+                        pin: pin1,
+                        status: 'pending' 
+                    })
+                    .eq('id', tempRegUser.id);
+
+                if(error) {
+                    alert("บันทึกข้อมูลไม่สำเร็จ: " + error.message);
+                } else {
+                    switchAuthMode('pending');
+                }
+            } catch (err) {
+                alert("เกิดปัญหาการบันทึก: " + err.message);
+            }
+            btn.innerText = "ยืนยันการลงทะเบียน";
+            btn.disabled = false;
+        }
+
+        // =========================================================
         function logout() {
             currentUser = null;
             document.getElementById('loginEmpId').value = '';
+            document.getElementById('loginPin').value = '';
             document.getElementById('mainAppSection').classList.add('hidden');
-            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            switchAuthMode('menu');
         }
 
         async function initWorkspace() {
@@ -676,6 +795,8 @@
                 amountInput.classList.remove('bg-gray-100', 'text-gray-400');
             }
         }
+        
+        switchAuthMode('menu');
     </script>
 </body>
 </html>
