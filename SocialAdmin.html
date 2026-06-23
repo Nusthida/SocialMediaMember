@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMC Admin Panel - Multi-Dimension Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #F3F4F6; }
+        .ttb-blue { color: #002D63; }
+        .bg-ttb-blue { background-color: #002D63; }
+        .ttb-orange { color: #F68B1F; }
+        .bg-ttb-orange { background-color: #F68B1F; }
+        .tab-active { border-bottom: 4px solid #F68B1F; color: #002D63; font-weight: bold; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <script>
+        // ==========================================
+        // 1. ตั้งค่าฐานข้อมูล Supabase (อย่าลืมใส่ Key ของคุณ)
+        // ==========================================
+        var SUPABASE_URL = 'https://vuxawbelluvnqlyaasgf.supabase.co';
+        var SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eGF3YmVsbHV2bnFseWFhc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NTY2NjcsImV4cCI6MjA5NzUzMjY2N30.Vrp6Hs_rlT2td0DBU3zwjc1HvbUgZnRWfJA5kx-LVro';
+        var supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        // ตัวแปรเก็บข้อมูลหลัก
+        var currentAdmin = null;
+        var usersData = [];
+        var salesData = [];
+        var activityData = [];
+        
+        // ตัวแปรควบคุม Chart.js (ป้องกันกราฟซ้อนตีกระตุก)
+        var myChartProduct = null;
+        var myChartZone = null;
+        var myChartRH = null;
+        var myChartLine = null;
+    </script>
+
+    <div id="loginSection" class="min-h-screen flex items-center justify-center bg-gray-100">
+        <div class="bg-white p-8 rounded-xl shadow-lg w-full max-w-md text-center">
+            <img src="Logo Social plain.png" alt="SMC Logo" class="h-20 mx-auto mb-6" onerror="this.src='https://via.placeholder.com/150x80?text=SMC+Logo'">
+            <h2 class="text-2xl font-bold ttb-blue mb-2">ระบบจัดการหลังบ้าน</h2>
+            <p class="text-sm text-gray-500 mb-6">Social Media Club Admin Panel</p>
+            
+            <input type="text" id="adminUser" placeholder="Username" class="w-full px-4 py-3 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="adminPass" placeholder="Password" class="w-full px-4 py-3 border rounded-lg mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            
+            <button onclick="handleAdminLogin()" class="w-full bg-ttb-blue text-white font-bold py-3 rounded-lg hover:bg-blue-800 transition shadow-md">
+                เข้าสู่ระบบผู้ดูแล
+            </button>
+            <p id="loginError" class="text-red-500 text-sm mt-4 hidden">Username หรือ Password ไม่ถูกต้อง!</p>
+        </div>
+    </div>
+
+    <div id="mainSection" class="hidden min-h-screen flex flex-col">
+        
+        <nav class="bg-white shadow-sm px-6 py-4 flex justify-between items-center border-b">
+            <div class="flex items-center gap-4">
+                <img src="Logo Social plain.png" alt="SMC" class="h-10" onerror="this.src='https://via.placeholder.com/100x40?text=Logo'">
+                <h1 class="text-xl font-bold ttb-blue border-l-2 pl-4">Admin Data Center</h1>
+            </div>
+            <div class="flex items-center gap-4">
+                <span id="adminRoleBadge" class="bg-blue-100 text-blue-800 text-xs font-bold px-3 py-1 rounded-full">Role</span>
+                <span class="font-semibold text-gray-700" id="adminNameDisplay">Admin Name</span>
+                <button onclick="logout()" class="text-gray-500 hover:text-red-500 font-medium">🚪 ออกจากระบบ</button>
+            </div>
+        </nav>
+
+        <div class="bg-white px-6 shadow-sm">
+            <div class="flex gap-8">
+                <button onclick="switchTab('dashboard')" id="tab-dashboard" class="py-4 tab-active">📊 Dashboard สรุปผล</button>
+                <button onclick="switchTab('users')" id="tab-users" class="py-4 text-gray-500 hover:text-blue-800 font-medium">👥 จัดการสมาชิก</button>
+                <button onclick="switchTab('sales')" id="tab-sales" class="py-4 text-gray-500 hover:text-blue-800 font-medium">💰 Sales Log</button>
+                <button onclick="switchTab('activities')" id="tab-activities" class="py-4 text-gray-500 hover:text-blue-800 font-medium">📱 Activity Log</button>
+            </div>
+        </div>
+
+        <div class="p-6 flex-grow max-w-7xl w-full mx-auto">
+
+            <div id="content-dashboard" class="space-y-6">
+                <div class="bg-white p-4 rounded-xl shadow-sm flex flex-col sm:flex-row gap-4 items-center justify-between">
+                    <div class="flex gap-4 items-center w-full sm:w-auto">
+                        <label class="font-bold text-gray-700 whitespace-nowrap">เลือกเดือนผลงาน:</label>
+                        <input type="month" id="dashMonthFilter" onchange="renderDashboard()" class="border p-2 rounded-lg focus:ring-2 focus:ring-blue-500 outline-none w-full sm:w-auto">
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="checkbox" id="includeResigned" checked onchange="renderDashboard()" class="w-5 h-5 text-blue-600 rounded cursor-pointer">
+                        <label for="includeResigned" class="font-bold text-gray-700 cursor-pointer select-none">รวมยอดขายพนักงานที่ลาออกแล้ว</label>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-blue-600">
+                        <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider">ยอดขายรวมทั้งหมด (บาท)</h3>
+                        <p class="text-3xl font-bold ttb-blue mt-2" id="kpiTotalAmt">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-orange-500">
+                        <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider">ยอดบัตรรวมเครดิต/กดเงินสด (ใบ)</h3>
+                        <p class="text-3xl font-bold ttb-orange mt-2" id="kpiTotalCard">0</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border-l-4 border-green-500">
+                        <h3 class="text-gray-400 text-xs font-bold uppercase tracking-wider">จำนวนพนักงานในระบบ (คน)</h3>
+                        <p class="text-3xl font-bold text-green-600 mt-2" id="kpiTotalUsers">0</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="border-b pb-3 mb-4">
+                            <h3 class="font-bold text-gray-700 text-lg flex items-center gap-2">📦 ยอดขายแยกตามผลิตภัณฑ์ (บาท)</h3>
+                        </div>
+                        <canvas id="productChart" height="180"></canvas>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="border-b pb-3 mb-4">
+                            <h3 class="font-bold text-gray-700 text-lg flex items-center gap-2">📍 ยอดขายแยกตามกลุ่ม Zone (บาท)</h3>
+                        </div>
+                        <canvas id="zoneChart" height="180"></canvas>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="border-b pb-3 mb-4">
+                            <h3 class="font-bold text-gray-700 text-lg flex items-center gap-2">🏢 ยอดขายแยกตามสายงาน RH (บาท)</h3>
+                        </div>
+                        <canvas id="rhChart" height="180"></canvas>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="border-b pb-3 mb-4">
+                            <h3 class="font-bold text-gray-700 text-lg flex items-center gap-2">📈 แนวโน้มยอดขายรวมรายเดือน</h3>
+                        </div>
+                        <canvas id="lineChart" height="180"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div id="content-users" class="hidden space-y-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold ttb-blue">รายชื่อสมาชิกและการอนุมัติ</h2>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="p-4 font-semibold text-gray-600">รหัสพนักงาน</th>
+                                <th class="p-4 font-semibold text-gray-600">ชื่อ-นามสกุล</th>
+                                <th class="p-4 font-semibold text-gray-600">Zone / RH</th>
+                                <th class="p-4 font-semibold text-gray-600">สถานะ</th>
+                                <th class="p-4 font-semibold text-gray-600 text-center action-col">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="content-sales" class="hidden space-y-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold ttb-blue">ประวัติการบันทึกยอดขาย (Sales Transaction)</h2>
+                    <button onclick="exportCSV('sales')" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 text-sm font-semibold transition">📥 Export CSV</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-orange-50 border-b">
+                            <tr>
+                                <th class="p-4 font-semibold text-gray-600">วันที่คีย์</th>
+                                <th class="p-4 font-semibold text-gray-600">เดือนผลงาน</th>
+                                <th class="p-4 font-semibold text-gray-600">รหัสพนง.</th>
+                                <th class="p-4 font-semibold text-gray-600">ผลิตภัณฑ์</th>
+                                <th class="p-4 font-semibold text-gray-600">หน่วย</th>
+                                <th class="p-4 font-semibold text-gray-600">ยอดเงิน (บาท)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="content-activities" class="hidden space-y-4">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-bold ttb-blue">ประวัติการบันทึกกิจกรรม Social</h2>
+                    <button onclick="exportCSV('activities')" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 text-sm font-semibold transition">📥 Export CSV</button>
+                </div>
+                <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-blue-50 border-b">
+                            <tr>
+                                <th class="p-4 font-semibold text-gray-600">วันที่คีย์</th>
+                                <th class="p-4 font-semibold text-gray-600">เดือนผลงาน</th>
+                                <th class="p-4 font-semibold text-gray-600">รหัสพนง.</th>
+                                <th class="p-4 font-semibold text-gray-600">วันที่ Live</th>
+                                <th class="p-4 font-semibold text-gray-600">ช่องทาง</th>
+                                <th class="p-4 font-semibold text-gray-600">TikTok Clips</th>
+                                <th class="p-4 font-semibold text-gray-600">FB Posts</th>
+                            </tr>
+                        </thead>
+                        <tbody id="activityTableBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- 1. Admin Authentication ---
+        async function handleAdminLogin() {
+            const user = document.getElementById('adminUser').value;
+            const pass = document.getElementById('adminPass').value;
+
+            try {
+                const { data, error } = await supabase.from('admins').select('*').eq('username', user).eq('password', pass).single();
+                if (error || !data) {
+                    document.getElementById('loginError').classList.remove('hidden');
+                    return;
+                }
+
+                currentAdmin = data;
+                document.getElementById('loginSection').classList.add('hidden');
+                document.getElementById('mainSection').classList.remove('hidden');
+                document.getElementById('adminNameDisplay').innerText = data.username;
+                document.getElementById('adminRoleBadge').innerText = data.role.toUpperCase();
+
+                if(data.role === 'viewer') {
+                    const actionCols = document.querySelectorAll('.action-col');
+                    actionCols.forEach(col => col.style.display = 'none');
+                }
+
+                await loadAllData();
+
+            } catch (err) {
+                console.error(err);
+                alert("เชื่อมต่อฐานข้อมูลล้มเหลว");
+            }
+        }
+
+        function logout() {
+            currentAdmin = null;
+            document.getElementById('loginSection').classList.remove('hidden');
+            document.getElementById('mainSection').classList.add('hidden');
+        }
+
+        function switchTab(tabName) {
+            const tabs = ['dashboard', 'users', 'sales', 'activities'];
+            tabs.forEach(t => {
+                document.getElementById('content-' + t).classList.add('hidden');
+                document.getElementById('tab-' + t).classList.remove('tab-active');
+                document.getElementById('tab-' + t).classList.add('text-gray-500');
+            });
+            document.getElementById('content-' + tabName).classList.remove('hidden');
+            document.getElementById('tab-' + tabName).classList.add('tab-active');
+            document.getElementById('tab-' + tabName).classList.remove('text-gray-500');
+        }
+
+        // --- 2. ดึงข้อมูลจากฐานข้อมูล ---
+        async function loadAllData() {
+            const resUsers = await supabase.from('users').select('*').order('id', { ascending: true });
+            if(resUsers.data) usersData = resUsers.data;
+
+            const resSales = await supabase.from('sales_log').select('*').order('created_at', { ascending: false });
+            if(resSales.data) salesData = resSales.data;
+
+            const resAct = await supabase.from('activity_log').select('*').order('created_at', { ascending: false });
+            if(resAct.data) activityData = resAct.data;
+
+            renderDashboard();
+            renderUsersTable();
+            renderSalesTable();
+            renderActivityTable();
+        }
+
+        // --- 3. ประมวลผลข้อมูลและวาดกราฟแบบแยกมิติ (Multi-Dimension) ---
+        function renderDashboard() {
+            const filterMonth = document.getElementById('dashMonthFilter').value;
+            const includeResigned = document.getElementById('includeResigned').checked;
+
+            // 3.1 กรองรายชื่อพนักงานตามการเปิดปิดพนักงานที่ลาออก
+            let activeUserIds = usersData.map(u => u.id);
+            if (!includeResigned) {
+                activeUserIds = usersData.filter(u => u.is_resigned !== true).map(u => u.id);
+            }
+
+            // 3.2 กรองยอดขายตามเงื่อนไขเดือนและพนักงาน
+            let filteredSales = salesData.filter(s => activeUserIds.includes(s.employee_id));
+            if (filterMonth) {
+                filteredSales = filteredSales.filter(s => s.target_month === filterMonth);
+            }
+
+            // 3.3 ถังเก็บยอดสะสมในมิติต่างๆ
+            let totalAmt = 0;
+            let totalCard = 0;
+            let productSums = {};
+            let zoneSums = {};
+            let rhSums = {};
+            let trendSums = {}; 
+
+            filteredSales.forEach(s => {
+                const amt = Number(s.amount_thb) || 0;
+                const qty = Number(s.quantity) || 0;
+                const pType = s.product_type || 'ไม่ระบุประเภท';
+
+                // ค้นหาจับคู่ Zone และ RH ของพนักงานผู้ขายจากฐานข้อมูลสมาชิก
+                const empInfo = usersData.find(u => u.id === s.employee_id);
+                const zoneName = empInfo && empInfo.zone ? empInfo.zone : 'ไม่มี Zone';
+                const rhName = empInfo && empInfo.rh ? empInfo.rh : 'ไม่มี RH';
+
+                // คำนวณ KPI หลัก
+                if(pType === 'บัตรเครดิต' || pType === 'บัตรกดเงินสด') {
+                    totalCard += qty;
+                } else {
+                    totalAmt += amt;
+                }
+
+                // สรุปยอดเงินรายผลิตภัณฑ์ (รวมสินค้าทุกชนิดที่เป็นจำนวนเงินบาท)
+                if(pType !== 'บัตรเครดิต' && pType !== 'บัตรกดเงินสด') {
+                    productSums[pType] = (productSums[pType] || 0) + amt;
+                }
+
+                // สรุปยอดเงินรวมแยกราย Zone
+                zoneSums[zoneName] = (zoneSums[zoneName] || 0) + amt;
+
+                // สรุปยอดเงินรวมแยกราย RH
+                rhSums[rhName] = (rhSums[rhName] || 0) + amt;
+
+                // สรุปยอดแนวโน้มแยกตามเดือน
+                if(s.target_month) {
+                    trendSums[s.target_month] = (trendSums[s.target_month] || 0) + amt;
+                }
+            });
+
+            // อัปเดตตัวเลขการ์ด KPI บนหน้าเว็บ
+            document.getElementById('kpiTotalAmt').innerText = totalAmt.toLocaleString() + " บาท";
+            document.getElementById('kpiTotalCard').innerText = totalCard.toLocaleString() + " ใบ";
+            document.getElementById('kpiTotalUsers').innerText = usersData.length + " คน";
+
+            // เรียกฟังก์ชันวาดกราฟทั้ง 4 ตัว
+            drawProductChart(productSums);
+            drawZoneChart(zoneSums);
+            drawRhChart(rhSums);
+            drawLineChart(trendSums);
+        }
+
+        // --- 4. ฟังก์ชันจัดการสร้างกราฟด้วย Chart.js ---
+        
+        function drawProductChart(dataObj) {
+            const ctx = document.getElementById('productChart').getContext('2d');
+            if(myChartProduct) myChartProduct.destroy(); // เคลียร์ขยะกราฟเก่า
+            myChartProduct = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(dataObj),
+                    datasets: [{ label: 'ยอดเงิน (บาท)', data: Object.values(dataObj), backgroundColor: '#002D63', borderRadius: 6 }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function drawZoneChart(dataObj) {
+            const ctx = document.getElementById('zoneChart').getContext('2d');
+            if(myChartZone) myChartZone.destroy();
+            myChartZone = new Chart(ctx, {
+                type: 'doughnut', // เปลี่ยนรูปทรงเป็นโดนัทเพื่อให้ดูง่ายแยกความต่างมิติ
+                data: {
+                    labels: Object.keys(dataObj),
+                    datasets: [{ 
+                        data: Object.values(dataObj), 
+                        backgroundColor: ['#F68B1F', '#002D63', '#10B981', '#3B82F6', '#8B5CF6', '#EC4899'] 
+                    }]
+                },
+                options: { responsive: true }
+            });
+        }
+
+        function drawRhChart(dataObj) {
+            const ctx = document.getElementById('rhChart').getContext('2d');
+            if(myChartRH) myChartRH.destroy();
+            myChartRH = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: Object.keys(dataObj),
+                    datasets: [{ label: 'ยอดรวมราย RH (บาท)', data: Object.values(dataObj), backgroundColor: '#10B981', borderRadius: 6 }]
+                },
+                options: { indexAxis: 'y', responsive: true, scales: { x: { beginAtZero: true } } } // ปรับเป็นกราฟแท่งแนวนอนเพื่อให้อ่านชื่อ RH ยาวๆ ได้สะดวก
+            });
+        }
+
+        function drawLineChart(dataObj) {
+            const ctx = document.getElementById('lineChart').getContext('2d');
+            const sortedMonths = Object.keys(dataObj).sort();
+            const sortedValues = sortedMonths.map(m => dataObj[m]);
+
+            if(myChartLine) myChartLine.destroy();
+            myChartLine = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: sortedMonths,
+                    datasets: [{ label: 'แนวโน้มรายเดือน', data: sortedValues, borderColor: '#F68B1F', backgroundColor: 'rgba(246, 139, 31, 0.1)', fill: true, tension: 0.3, borderWidth: 3 }]
+                },
+                options: { responsive: true, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        // --- 5. Render Tables ---
+        function renderUsersTable() {
+            const tbody = document.getElementById('usersTableBody');
+            tbody.innerHTML = usersData.map(u => {
+                let statusBadge = u.status === 'pending' 
+                    ? `<span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-md font-medium">รออนุมัติ</span>`
+                    : `<span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-md font-medium">ใช้งานปกติ</span>`;
+                
+                let resignBadge = u.is_resigned ? `<span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-md ml-2 font-medium">ลาออก</span>` : '';
+                let actionHtml = '';
+
+                if(currentAdmin && currentAdmin.role !== 'viewer') {
+                    if(u.status === 'pending' && (currentAdmin.role === 'superadmin' || currentAdmin.role === 'approver')) {
+                        actionHtml = `<button onclick="approveUser('${u.id}')" class="bg-green-500 text-white px-3 py-1 rounded-lg text-xs font-bold hover:bg-green-600 shadow-sm">✅ อนุมัติ</button>`;
+                    } else if (currentAdmin.role === 'superadmin' || currentAdmin.role === 'editor') {
+                        actionHtml = `<span class="text-gray-400 text-xs">อนุมัติแล้ว</span>`;
+                    }
+                }
+
+                return `
+                    <tr class="hover:bg-gray-50 transition">
+                        <td class="p-4 font-semibold text-gray-700">${u.id}</td>
+                        <td class="p-4">${u.name || '-'} ${resignBadge}</td>
+                        <td class="p-4 text-sm text-gray-500">Zone: ${u.zone || 'ไม่ระบุ'} / RH: ${u.rh || 'ไม่ระบุ'}</td>
+                        <td class="p-4">${statusBadge}</td>
+                        <td class="p-4 text-center action-col" style="${currentAdmin.role==='viewer'?'display:none':''}">${actionHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function renderSalesTable() {
+            const tbody = document.getElementById('salesTableBody');
+            tbody.innerHTML = salesData.map(s => `
+                <tr class="hover:bg-orange-50/40">
+                    <td class="p-4 text-xs text-gray-500">${new Date(s.created_at).toLocaleString('th-TH')}</td>
+                    <td class="p-4 text-sm">${s.target_month || '-'}</td>
+                    <td class="p-4 font-medium">${s.employee_id}</td>
+                    <td class="p-4"><span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">${s.product_type}</span></td>
+                    <td class="p-4 text-sm">${s.quantity || '-'}</td>
+                    <td class="p-4 font-semibold text-right max-w-[120px]">${Number(s.amount_thb||0).toLocaleString()}</td>
+                </tr>
+            `).join('');
+        }
+
+        function renderActivityTable() {
+            const tbody = document.getElementById('activityTableBody');
+            tbody.innerHTML = activityData.map(a => `
+                <tr class="hover:bg-blue-50/40">
+                    <td class="p-4 text-xs text-gray-500">${new Date(a.created_at).toLocaleString('th-TH')}</td>
+                    <td class="p-4 text-sm">${a.target_month || '-'}</td>
+                    <td class="p-4 font-medium">${a.employee_id}</td>
+                    <td class="p-4 text-xs">${a.live_datetime ? new Date(a.live_datetime).toLocaleString('th-TH') : '-'}</td>
+                    <td class="p-4 text-sm">${a.live_channel || '-'}</td>
+                    <td class="p-4 text-center font-semibold text-blue-600">${a.tiktok_clips || 0}</td>
+                    <td class="p-4 text-center font-semibold text-indigo-600">${a.fb_posts || 0}</td>
+                </tr>
+            `).join('');
+        }
+
+        // --- 6. Actions อนุมัติสมาชิก ---
+        async function approveUser(id) {
+            if(confirm('ต้องการอนุมัติผู้ใช้งานรหัส ' + id + ' ใช่หรือไม่?')) {
+                const { error } = await supabase.from('users').update({ status: 'active' }).eq('id', id);
+                if(!error) {
+                    alert('อนุมัติสำเร็จ');
+                    await loadAllData();
+                } else {
+                    alert('เกิดข้อผิดพลาด: ' + error.message);
+                }
+            }
+        }
+
+        // --- 7. Export ข้อมูลเป็น CSV ---
+        function exportCSV(type) {
+            let dataArr = type === 'sales' ? salesData : activityData;
+            if(dataArr.length === 0) return alert('ไม่มีข้อมูลสำหรับ Export');
+
+            const keys = Object.keys(dataArr[0]);
+            let csvContent = "data:text/csv;charset=utf-8,\uFEFF" + keys.join(",") + "\n";
+            
+            dataArr.forEach(row => {
+                let values = keys.map(k => `"${(row[k] !== null ? row[k] : '')}"`);
+                csvContent += values.join(",") + "\n";
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `export_${type}_${new Date().getTime()}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
