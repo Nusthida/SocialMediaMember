@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Social Media Club - Front-end</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { prompt: ['Prompt', 'sans-serif'] },
+                    colors: {
+                        ttbBlue: '#002D63',
+                        ttbOrange: '#F68B1F',
+                        ttbLightBlue: '#E5F0FF',
+                        ttbGray: '#F3F4F6'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Prompt', sans-serif; background-color: #F0F4F8; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 1rem; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05); }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #c1c1c1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #a8a8a8; }
+
+        .member-card-wrapper {
+            container-type: inline-size;
+            width: 100%;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .member-card {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 9;
+            background-image: url('Member card BG.jpg');
+            background-size: cover;
+            background-position: center;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            overflow: hidden;
+        }
+
+        .profile-img { position: absolute; top: 33%; left: 7.2%; width: 20.0%; height: 44%; object-fit: cover; border-radius: 10px; background-color: #ffffff; z-index: 1; }
+        .badge-img { position: absolute; top: 65%; left: 10%; width: 15%; z-index: 2; }
+        .text-name { position: absolute; top: 31%; left: 32%; color: #003366; font-size: 4.5cqi; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 65%; }
+        .text-position { position: absolute; top: 41.5%; left: 32%; color: #D97736; font-size: 2.2cqi; font-weight: 600; }
+        .info-group { position: absolute; color: #003366; font-size: 1.8cqi; font-weight: 700; display: flex; flex-direction: column; gap: 1.5cqi; white-space: nowrap; }
+        .text-emp-id { top: 49.5%; left: 48%; }
+        .text-member-id { top: 53.5%; left: 48%; }
+        .text-region { top: 57.5%; left: 48%; }
+        .social-text { position: absolute; top: 78.5%; color: #003366; font-size: 1.8cqi; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 25%; }
+        .text-facebook { left: 35%; }
+        .text-tiktok { left: 70%; }
+        
+        .loading { opacity: 0.6; cursor: not-allowed; }
+        
+        /* สไตล์สำหรับช่องกรอก PIN */
+        .pin-input {
+            letter-spacing: 1em;
+            text-align: center;
+            font-size: 1.5rem;
+        }
+    </style>
+</head>
+<body class="text-gray-800">
+
+    <!-- ================== LOGIN / REGISTER SECTION ================== -->
+    <div id="authSection" class="min-h-screen flex items-center justify-center bg-gradient-to-br from-ttbLightBlue to-blue-200 p-4 relative">
+        <div class="glass-card w-full max-w-md p-8 text-center transition-all duration-300">
+            
+            <div class="mb-6 flex justify-center">
+                <img src="Logo Social plain.png" alt="SMC Logo" class="h-28 object-contain drop-shadow-md" onerror="this.src='https://via.placeholder.com/150?text=SMC'">
+            </div>
+            
+            <!-- หน้าเลือก เข้าสู่ระบบ / ลงทะเบียน -->
+            <div id="authMenuMode">
+                <h2 class="text-2xl font-bold text-ttbBlue mb-2">ยินดีต้อนรับสู่ระบบสมาชิก</h2>
+                <p class="text-gray-500 mb-8 text-sm">Social Media Club</p>
+                
+                <div class="space-y-4">
+                    <button onclick="switchAuthMode('login')" class="w-full bg-ttbBlue hover:bg-blue-900 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                        เข้าสู่ระบบ (สำหรับสมาชิกเดิม)
+                    </button>
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-gray-300"></div>
+                        <span class="flex-shrink-0 mx-4 text-gray-400 text-sm">หรือ</span>
+                        <div class="flex-grow border-t border-gray-300"></div>
+                    </div>
+                    <button onclick="switchAuthMode('register_check')" class="w-full bg-white border-2 border-ttbOrange text-ttbOrange hover:bg-orange-50 font-bold py-3 px-4 rounded-lg transition shadow-sm">
+                        ลงทะเบียนผู้ใช้ใหม่
+                    </button>
+                </div>
+            </div>
+
+            <!-- หน้า Login -->
+            <div id="loginMode" class="hidden">
+                <button onclick="switchAuthMode('menu')" class="absolute top-4 left-4 text-gray-500 hover:text-ttbBlue">
+                    <i class="fas fa-arrow-left"></i> กลับ
+                </button>
+                <h2 class="text-2xl font-bold text-ttbBlue mb-6">เข้าสู่ระบบ</h2>
+                
+                <div class="space-y-4 mb-6 text-left">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">รหัสพนักงาน</label>
+                        <input type="text" id="loginEmpId" placeholder="เช่น 10001" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-ttbBlue text-center font-medium">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">รหัส PIN (5 หลัก)</label>
+                        <input type="password" id="loginPin" maxlength="5" placeholder="•••••" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:border-ttbBlue pin-input font-mono">
+                    </div>
+                </div>
+                
+                <button id="btnLogin" onclick="handleLogin()" class="w-full bg-ttbBlue hover:bg-blue-900 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                    เข้าสู่ระบบ
+                </button>
+            </div>
+
+            <!-- หน้า ลงทะเบียน (เช็กรหัส) -->
+            <div id="registerCheckMode" class="hidden">
+                <button onclick="switchAuthMode('menu')" class="absolute top-4 left-4 text-gray-500 hover:text-ttbBlue">
+                    <i class="fas fa-arrow-left"></i> กลับ
+                </button>
+                <h2 class="text-2xl font-bold text-ttbOrange mb-2">ลงทะเบียนผู้ใช้ใหม่</h2>
+                <p class="text-gray-500 mb-6 text-sm">กรุณากรอกรหัสพนักงานเพื่อตรวจสอบข้อมูลเบื้องต้น</p>
+                
+                <div class="mb-6">
+                    <input type="text" id="regCheckEmpId" onkeypress="if(event.key === 'Enter') checkEmployeeForRegister()" placeholder="กรอกรหัสพนักงานของคุณ" class="w-full px-4 py-3 border border-orange-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-ttbOrange text-center text-lg font-medium bg-orange-50">
+                </div>
+                <button id="btnRegCheck" onclick="checkEmployeeForRegister()" class="w-full bg-ttbOrange hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                    ตรวจสอบข้อมูล
+                </button>
+            </div>
+
+            <!-- หน้า ลงทะเบียน (ตั้ง PIN และข้อมูล) -->
+            <div id="registerFormMode" class="hidden">
+                <h2 class="text-xl font-bold text-ttbOrange mb-4">สร้างบัญชีผู้ใช้งาน</h2>
+                
+                <div class="bg-orange-50 rounded-lg p-3 mb-4 text-left border border-orange-100">
+                    <p class="text-sm font-bold text-ttbBlue">ข้อมูลของคุณในระบบส่วนกลาง:</p>
+                    <p class="text-xs text-gray-600 mt-1">ชื่อ: <span id="lblRegName" class="font-semibold">-</span></p>
+                    <p class="text-xs text-gray-600">ตำแหน่ง: <span id="lblRegPosition" class="font-semibold">-</span></p>
+                </div>
+
+                <div class="space-y-4 mb-6 text-left">
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">ตั้งรหัส PIN (ตัวเลข 5 หลัก)</label>
+                        <input type="password" id="regPin1" maxlength="5" placeholder="ตัวเลข 5 หลัก" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-ttbOrange pin-input font-mono">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-gray-600 mb-1">ยืนยันรหัส PIN อีกครั้ง</label>
+                        <input type="password" id="regPin2" maxlength="5" placeholder="ตัวเลข 5 หลัก" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-ttbOrange pin-input font-mono">
+                    </div>
+                </div>
+                
+                <button id="btnRegisterFinal" onclick="submitRegistration()" class="w-full bg-ttbOrange hover:bg-orange-600 text-white font-bold py-3 px-4 rounded-lg transition shadow-md">
+                    ยืนยันการลงทะเบียน
+                </button>
+            </div>
+
+            <!-- หน้า รออนุมัติ -->
+            <div id="pendingMode" class="hidden">
+                <button onclick="switchAuthMode('menu')" class="absolute top-4 left-4 text-gray-500 hover:text-ttbBlue">
+                    <i class="fas fa-home"></i> หน้าแรก
+                </button>
+                <div class="text-orange-500 text-5xl mb-4"><i class="fas fa-clock"></i></div>
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">บัญชีอยู่ระหว่างรออนุมัติ</h2>
+                <p class="text-gray-600 mb-6 text-sm leading-relaxed">
+                    คุณได้ทำการลงทะเบียนเรียบร้อยแล้ว<br>ขณะนี้กำลังรอให้ผู้ดูแลระบบ (Admin) ตรวจสอบและอนุมัติสิทธิ์การเข้าใช้งานของคุณครับ
+                </p>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ================== MAIN APP SECTION ================== -->
+    <!-- (ส่วนการแสดงผล Dashboard เหมือนเดิม) -->
+    <div id="mainAppSection" class="hidden min-h-screen pb-12">
+        <nav class="bg-ttbBlue text-white shadow-md sticky top-0 z-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between h-16">
+                    <div class="flex items-center">
+                        <img src="Logo Social plain.png" alt="Logo" class="h-10 bg-white p-1 rounded" onerror="this.src='https://via.placeholder.com/100x40?text=Logo'">
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="flex items-center space-x-2">
+                            <img id="navProfilePic" src="https://ui-avatars.com/api/?name=User&background=F68B1F&color=fff" class="w-8 h-8 rounded-full border-2 border-white object-cover">
+                            <span id="navEmpName" class="font-medium hidden sm:block">กำลังโหลด...</span>
+                        </div>
+                        <button onclick="logout()" class="bg-red-500 hover:bg-red-600 text-white px-3 py-1.5 rounded text-sm font-medium transition">
+                            <i class="fas fa-sign-out-alt"></i> ออกจากระบบ
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                
+                <!-- LEFT COLUMN: Profile & Card -->
+                <div class="lg:col-span-1 space-y-6">
+                    <div class="member-card-wrapper">
+                        <div class="member-card">
+                            <img id="cardProfilePic" src="https://ui-avatars.com/api/?name=User&background=F68B1F&color=fff&size=300" alt="Profile" class="profile-img">
+                            <img src="Logo Social media 2026.png" alt="Badge" class="badge-img" onerror="this.style.display='none'">
+
+                            <div id="cardEmpName" class="text-name">-</div>
+                            <div id="cardPositionThai" class="text-position">-</div>
+                            <div id="cardEmpId" class="text-emp-id info-group">-</div>
+                            <div id="cardMemberId" class="text-member-id info-group">-</div>
+                            <div id="cardZone" class="text-region info-group">-</div>
+                            <div id="cardFb" class="text-facebook social-text">-</div>
+                            <div id="cardTiktok" class="text-tiktok social-text">-</div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6">
+                        <h3 class="font-bold text-ttbBlue border-b border-gray-200 pb-2 mb-4"><i class="fas fa-user-edit mr-2"></i> อัปเดตโปรไฟล์</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">รูปภาพโปรไฟล์ (ระบบอัปโหลดเข้าคลาวด์อัตโนมัติ)</label>
+                                <input type="file" id="uploadImg" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-ttbBlue hover:file:bg-blue-100 cursor-pointer">
+                                <p id="uploadStatus" class="text-[10px] text-orange-500 mt-1 hidden">กำลังอัปโหลดภาพ...</p>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">ชื่อช่อง Facebook</label>
+                                <input type="text" id="inputFb" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-ttbBlue text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">ชื่อช่อง TikTok</label>
+                                <input type="text" id="inputTiktok" class="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:border-ttbBlue text-sm">
+                            </div>
+                            <button id="btnSaveProfile" onclick="saveProfile()" class="w-full bg-ttbBlue text-white text-sm font-bold py-2 rounded hover:bg-blue-800 transition shadow">
+                                บันทึกข้อมูล Social Media
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Forms & Dashboard -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="glass-card p-4 flex items-center justify-between bg-gradient-to-r from-ttbLightBlue to-white border-l-4 border-ttbBlue">
+                        <div class="font-bold text-ttbBlue"><i class="fas fa-calendar-alt mr-2"></i> เลือกเดือนผลงานสำหรับบันทึกข้อมูล</div>
+                        <select id="globalMonth" class="px-4 py-2 border border-blue-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ttbOrange bg-white">
+                            <option value="มกราคม 2569">มกราคม 2569</option>
+                            <option value="กุมภาพันธ์ 2569">กุมภาพันธ์ 2569</option>
+                            <option value="มีนาคม 2569">มีนาคม 2569</option>
+                            <option value="เมษายน 2569">เมษายน 2569</option>
+                            <option value="พฤษภาคม 2569" selected>พฤษภาคม 2569</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-card p-6 border-t-4 border-ttbBlue">
+                            <h3 class="font-bold text-ttbBlue mb-4"><i class="fas fa-video mr-2"></i> บันทึกกิจกรรม (Activity)</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">วัน/เวลา Live</label>
+                                    <input type="datetime-local" id="liveDate" class="w-full px-3 py-2 border rounded text-sm focus:border-ttbBlue outline-none">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-600 mb-1">ช่องทาง Live</label>
+                                    <select id="liveChannel" class="w-full px-3 py-2 border rounded text-sm focus:border-ttbBlue outline-none">
+                                        <option value="-">ไม่มี Live</option>
+                                        <option value="TikTok">TikTok</option>
+                                        <option value="Facebook">Facebook</option>
+                                    </select>
+                                </div>
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">จำนวนคลิป TikTok</label>
+                                        <input type="number" id="tiktokClips" value="0" min="0" class="w-full px-3 py-2 border rounded text-sm outline-none text-center focus:border-ttbBlue">
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">จำนวนโพสต์ FB</label>
+                                        <input type="number" id="fbPosts" value="0" min="0" class="w-full px-3 py-2 border rounded text-sm outline-none text-center focus:border-ttbBlue">
+                                    </div>
+                                </div>
+                                <button id="btnSaveActivity" onclick="saveActivity()" class="w-full bg-ttbBlue text-white text-sm font-bold py-2 rounded hover:bg-blue-800 transition shadow">
+                                    บันทึกกิจกรรม
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-6 border-t-4 border-ttbOrange flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start mb-4">
+                                    <h3 class="font-bold text-ttbOrange"><i class="fas fa-chart-line mr-2"></i> บันทึกยอดขาย</h3>
+                                    <span class="bg-red-100 text-red-600 text-[10px] font-bold px-2 py-1 rounded animate-pulse">
+                                        *คีย์เฉพาะรายการใหม่*
+                                    </span>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-600 mb-1">ประเภทผลิตภัณฑ์</label>
+                                        <select id="productType" onchange="handleProductChange()" class="w-full px-3 py-2 border rounded text-sm focus:border-ttbOrange outline-none">
+                                            <option value="Auto Loan">Auto Loan (รถ)</option>
+                                            <option value="Home Loan">Home Loan (บ้าน)</option>
+                                            <option value="Cash2Go">Cash2Go (C2G)</option>
+                                            <option value="BA Life">BA Life</option>
+                                            <option value="BA Nonlife">BA Nonlife</option>
+                                            <option value="Credit Card">Credit Card (บัตรเครดิต)</option>
+                                            <option value="Cash Card">Cash Card (บัตรกดเงินสด)</option>
+                                            <option value="Other">อื่นๆ</option>
+                                        </select>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <label id="lblQuantity" class="block text-xs font-semibold text-gray-600 mb-1">จำนวน (คัน)</label>
+                                            <input type="number" id="salesQty" value="0" min="0" class="w-full px-3 py-2 border rounded text-sm outline-none text-center focus:border-ttbOrange">
+                                        </div>
+                                        <div>
+                                            <label id="lblAmount" class="block text-xs font-semibold text-gray-600 mb-1">ยอดเงิน (บาท)</label>
+                                            <input type="number" id="salesAmount" value="0" min="0" class="w-full px-3 py-2 border rounded text-sm outline-none text-center focus:border-ttbOrange">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <input type="text" id="otherDetail" placeholder="ระบุรายละเอียด (ถ้าเลือกอื่นๆ)" class="w-full px-3 py-2 border rounded text-sm outline-none hidden">
+                                    </div>
+                                    <button id="btnSaveSales" onclick="saveSales()" class="w-full bg-ttbOrange text-white text-sm font-bold py-2 rounded hover:bg-orange-600 transition shadow">
+                                        ส่งยอดเข้าระบบส่วนกลาง
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="glass-card p-6 border-t-4 border-gray-400">
+                        <div class="flex justify-between items-center border-b border-gray-200 pb-3 mb-4">
+                            <h3 class="font-bold text-ttbBlue"><i class="fas fa-chart-pie mr-2"></i> สรุปผลงานของฉัน (My Dashboard)</h3>
+                            <select id="dashboardFilter" onchange="renderDashboard()" class="text-xs border rounded px-2 py-1 outline-none text-gray-600 bg-gray-50 font-bold">
+                                <option value="ALL">รวมทั้งปี</option>
+                                <option value="พฤษภาคม 2569" selected>พฤษภาคม 2569</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+                            <div class="bg-gray-50 p-3 rounded border border-gray-200 text-center shadow-sm">
+                                <div class="text-[10px] text-gray-500 font-bold mb-1">Auto Loan (บาท)</div>
+                                <div id="dashAuto" class="text-sm font-bold text-ttbBlue">0</div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded border border-gray-200 text-center shadow-sm">
+                                <div class="text-[10px] text-gray-500 font-bold mb-1">Home Loan (บาท)</div>
+                                <div id="dashHome" class="text-sm font-bold text-ttbBlue">0</div>
+                            </div>
+                            <div class="bg-gray-50 p-3 rounded border border-gray-200 text-center shadow-sm">
+                                <div class="text-[10px] text-gray-500 font-bold mb-1">C2G (บาท)</div>
+                                <div id="dashC2G" class="text-sm font-bold text-ttbBlue">0</div>
+                            </div>
+                            <div class="bg-blue-50 p-3 rounded border border-blue-200 text-center shadow-sm relative overflow-hidden">
+                                <div class="absolute inset-0 bg-ttbBlue opacity-10"></div>
+                                <div class="text-[10px] text-ttbBlue font-bold mb-1 relative z-10">ยอดรวม All (บาท)</div>
+                                <div id="dashTotalThb" class="text-base font-bold text-ttbBlue relative z-10">0</div>
+                            </div>
+                            <div class="bg-orange-50 p-3 rounded border border-orange-200 text-center shadow-sm relative overflow-hidden">
+                                <div class="absolute inset-0 bg-ttbOrange opacity-10"></div>
+                                <div class="text-[10px] text-ttbOrange font-bold mb-1 relative z-10">บัตรรวม (ใบ)</div>
+                                <div id="dashTotalCards" class="text-base font-bold text-ttbOrange relative z-10">0</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h4 class="text-sm font-bold text-gray-700 mb-2">ประวัติการคีย์ยอด (Transaction Log)</h4>
+                            <div class="max-h-40 overflow-y-auto border rounded bg-white">
+                                <table class="w-full text-left text-xs whitespace-nowrap">
+                                    <thead class="bg-gray-100 sticky top-0 z-10 shadow-sm">
+                                        <tr>
+                                            <th class="p-2 border-b">วันที่คีย์รายการ</th>
+                                            <th class="p-2 border-b">เดือนผลงาน</th>
+                                            <th class="p-2 border-b">ผลิตภัณฑ์</th>
+                                            <th class="p-2 border-b text-right">จำนวน</th>
+                                            <th class="p-2 border-b text-right">ยอดเงิน (บาท)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="txLogTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================================
+        // 🔴🔴🔴 นำ URL และ API Key มาใส่ตรงนี้ครับ 🔴🔴🔴
+        const SUPABASE_URL = 'https://vuxawbelluvnqlyaasgf.supabase.co';
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ1eGF3YmVsbHV2bnFseWFhc2dmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5NTY2NjcsImV4cCI6MjA5NzUzMjY2N30.Vrp6Hs_rlT2td0DBU3zwjc1HvbUgZnRWfJA5kx-LVro'; 
+        // =========================================================================
+
+        const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        let currentUser = null;
+        let mySalesLog = [];
+        let tempRegUser = null; 
+
+        function switchAuthMode(mode) {
+            document.getElementById('authMenuMode').classList.add('hidden');
+            document.getElementById('loginMode').classList.add('hidden');
+            document.getElementById('registerCheckMode').classList.add('hidden');
+            document.getElementById('registerFormMode').classList.add('hidden');
+            document.getElementById('pendingMode').classList.add('hidden');
+
+            if(mode === 'menu') document.getElementById('authMenuMode').classList.remove('hidden');
+            else if(mode === 'login') document.getElementById('loginMode').classList.remove('hidden');
+            else if(mode === 'register_check') document.getElementById('registerCheckMode').classList.remove('hidden');
+            else if(mode === 'register_form') document.getElementById('registerFormMode').classList.remove('hidden');
+            else if(mode === 'pending') document.getElementById('pendingMode').classList.remove('hidden');
+        }
+
+        // --- เพิ่มระบบดักจับ Error และแจ้งเตือนให้ชัดเจน ---
+        async function checkEmployeeForRegister() {
+            const inputId = document.getElementById('regCheckEmpId').value.trim();
+            const btn = document.getElementById('btnRegCheck');
+            
+            if(!inputId) return alert("กรุณากรอกรหัสพนักงาน");
+            
+            // 💡 เปลี่ยนข้อความปุ่ม เพื่อให้ผู้ใช้รู้ว่ากำลังโหลด
+            const originalText = btn.innerText;
+            btn.innerText = "กำลังค้นหาข้อมูลในระบบ...";
+            btn.disabled = true;
+
+            try {
+                // วิ่งไปเช็กใน Supabase
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('id', inputId)
+                    .maybeSingle();
+
+                if (error) {
+                    alert("เชื่อมต่อฐานข้อมูลล้มเหลว โปรดตรวจสอบว่าคุณใส่ API Key ครบถ้วนแล้วหรือไม่\n\nรายละเอียด: " + error.message);
+                } else if (!data) {
+                    alert("คุณไม่มีสิทธิ (ไม่พบรหัสพนักงานนี้ในฐานระบบส่วนกลาง)");
+                } else if (data.pin && data.pin.trim() !== "") {
+                    alert("รหัสพนักงานนี้มีการลงทะเบียนไปแล้ว!\nหากลืมรหัส PIN กรุณาติดต่อผู้ดูแลระบบ");
+                } else {
+                    // เจอคน และยังไม่เคยตั้ง PIN เปลี่ยนไปหน้าตั้งรหัส
+                    tempRegUser = data;
+                    document.getElementById('lblRegName').innerText = data.name || '-';
+                    document.getElementById('lblRegPosition').innerText = data.position_code || '-';
+                    switchAuthMode('register_form');
+                }
+            } catch (err) {
+                console.error("เกิดข้อผิดพลาด:", err);
+                alert("แอปพลิเคชันขัดข้อง โปรดตรวจสอบ Console (F12)\n" + err.message);
+            }
+            
+            // 💡 รีเซ็ตปุ่มกลับมาเหมือนเดิม
+            btn.innerText = originalText;
+            btn.disabled = false;
+        }
+
+        async function handleLogin() {
+            const inputId = document.getElementById('loginEmpId').value.trim();
+            const inputPin = document.getElementById('loginPin').value.trim();
+            const btn = document.getElementById('btnLogin');
+            
+            if(!inputId) return alert("กรุณากรอกรหัสพนักงาน");
+            if(inputPin.length !== 5) return alert("กรุณากรอกรหัส PIN ให้ครบ 5 หลัก");
+            
+            btn.innerText = "กำลังตรวจสอบสิทธิ์...";
+            btn.disabled = true;
+
+            try {
+                const { data, error } = await supabaseClient
+                    .from('users')
+                    .select('*')
+                    .eq('id', inputId)
+                    .maybeSingle();
+
+                if (error) {
+                    alert("เชื่อมต่อฐานข้อมูลล้มเหลว โปรดตรวจสอบ API Key\n" + error.message);
+                } else if (!data) {
+                    alert("คุณไม่มีสิทธิ (ไม่พบรหัสพนักงานในระบบส่วนกลาง)");
+                } else {
+                    if (!data.pin) {
+                        alert("คุณยังไม่ได้ลงทะเบียนผู้ใช้งาน\nกรุณาไปที่เมนู 'ลงทะเบียนผู้ใช้ใหม่' ก่อนครับ");
+                    } else if (data.pin !== inputPin) {
+                        alert("รหัส PIN ไม่ถูกต้อง");
+                        document.getElementById('loginPin').value = '';
+                    } else if (data.status === 'pending') {
+                        switchAuthMode('pending'); 
+                    } else if (data.status === 'rejected') {
+                        alert("บัญชีของคุณถูกระงับ/ไม่อนุมัติการเข้าใช้งาน");
+                    } else {
+                        currentUser = data;
+                        document.getElementById('authSection').classList.add('hidden');
+                        document.getElementById('mainAppSection').classList.remove('hidden');
+                        initWorkspace();
+                    }
+                }
+            } catch (err) {
+                alert("เกิดปัญหาขัดข้อง: " + err.message);
+            }
+            
+            btn.innerText = "เข้าสู่ระบบ";
+            btn.disabled = false;
+        }
+
+        async function submitRegistration() {
+            const pin1 = document.getElementById('regPin1').value;
+            const pin2 = document.getElementById('regPin2').value;
+            const btn = document.getElementById('btnRegisterFinal');
+
+            if(pin1.length !== 5 || !/^\d+$/.test(pin1)) {
+                return alert("กรุณาตั้งรหัส PIN เป็นตัวเลข 5 หลักเท่านั้น");
+            }
+            if(pin1 !== pin2) {
+                return alert("รหัส PIN ทั้งสองช่องไม่ตรงกัน!");
+            }
+
+            btn.innerText = "กำลังบันทึกข้อมูล...";
+            btn.disabled = true;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('users')
+                    .update({ 
+                        pin: pin1,
+                        status: 'pending' 
+                    })
+                    .eq('id', tempRegUser.id);
+
+                if(error) {
+                    alert("บันทึกข้อมูลไม่สำเร็จ: " + error.message);
+                } else {
+                    switchAuthMode('pending');
+                }
+            } catch (err) {
+                alert("เกิดปัญหาการบันทึก: " + err.message);
+            }
+            btn.innerText = "ยืนยันการลงทะเบียน";
+            btn.disabled = false;
+        }
+
+        // =========================================================
+        function logout() {
+            currentUser = null;
+            document.getElementById('loginEmpId').value = '';
+            document.getElementById('loginPin').value = '';
+            document.getElementById('mainAppSection').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            switchAuthMode('menu');
+        }
+
+        async function initWorkspace() {
+            const defaultPic = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name)}&background=F68B1F&color=fff&size=300`;
+            const profilePicUrl = currentUser.pic || defaultPic;
+            
+            document.getElementById('navEmpName').innerText = currentUser.name;
+            document.getElementById('navProfilePic').src = profilePicUrl;
+            document.getElementById('cardProfilePic').src = profilePicUrl;
+
+            document.getElementById('cardEmpName').innerText = currentUser.name;
+            document.getElementById('cardPositionThai').innerText = currentUser.position_code || "พนักงาน";
+            document.getElementById('cardEmpId').innerText = currentUser.id;
+            document.getElementById('cardMemberId').innerText = currentUser.member_id || "-";
+            document.getElementById('cardZone').innerText = (currentUser.region || "") + " " + (currentUser.zone || "");
+            document.getElementById('cardFb').innerText = currentUser.fb || "-";
+            document.getElementById('cardTiktok').innerText = currentUser.tiktok || "-";
+
+            document.getElementById('inputFb').value = currentUser.fb || "";
+            document.getElementById('inputTiktok').value = currentUser.tiktok || "";
+
+            handleProductChange();
+            await loadSalesData();
+        }
+
+        document.getElementById('uploadImg').addEventListener('change', async function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const statusText = document.getElementById('uploadStatus');
+            statusText.classList.remove('hidden');
+            statusText.innerText = "กำลังอัปโหลดภาพ...";
+            statusText.className = "text-[10px] text-orange-500 mt-1";
+
+            try {
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${currentUser.id}_${Date.now()}.${fileExt}`;
+
+                const { error: uploadError } = await supabaseClient.storage
+                    .from('avatars')
+                    .upload(fileName, file);
+
+                if (uploadError) throw uploadError;
+
+                const { data: publicUrlData } = supabaseClient.storage
+                    .from('avatars')
+                    .getPublicUrl(fileName);
+                
+                const imgUrl = publicUrlData.publicUrl;
+
+                await supabaseClient.from('users').update({ pic: imgUrl }).eq('id', currentUser.id);
+
+                document.getElementById('cardProfilePic').src = imgUrl;
+                document.getElementById('navProfilePic').src = imgUrl;
+                currentUser.pic = imgUrl;
+                
+                statusText.innerText = "อัปโหลดรูปภาพลงฐานข้อมูลสำเร็จ!";
+                statusText.className = "text-[10px] text-green-600 mt-1";
+                setTimeout(() => statusText.classList.add('hidden'), 3000);
+
+            } catch (err) {
+                alert("เกิดปัญหาขัดข้องในการอัปโหลดไฟล์: " + err.message);
+                statusText.classList.add('hidden');
+            }
+        });
+
+        async function saveProfile() {
+            const fb = document.getElementById('inputFb').value;
+            const tiktok = document.getElementById('inputTiktok').value;
+            const btn = document.getElementById('btnSaveProfile');
+            
+            btn.innerText = "กำลังบันทึก...";
+            
+            const { error } = await supabaseClient
+                .from('users')
+                .update({ fb: fb, tiktok: tiktok })
+                .eq('id', currentUser.id);
+
+            if(error) {
+                alert("เกิดข้อผิดพลาดในการบันทึกช่องทางติดต่อ");
+            } else {
+                currentUser.fb = fb;
+                currentUser.tiktok = tiktok;
+                document.getElementById('cardFb').innerText = fb || "-";
+                document.getElementById('cardTiktok').innerText = tiktok || "-";
+                alert("บันทึกข้อมูลสำเร็จ");
+            }
+            btn.innerText = "บันทึกข้อมูล Social Media";
+        }
+
+        async function saveActivity() {
+            const month = document.getElementById('globalMonth').value;
+            const btn = document.getElementById('btnSaveActivity');
+            btn.innerText = "กำลังบันทึก...";
+            
+            const { error } = await supabaseClient.from('activity_log').insert([{
+                emp_id: currentUser.id,
+                month: month,
+                live_date: document.getElementById('liveDate').value || "-",
+                live_channel: document.getElementById('liveChannel').value,
+                tiktok_clips: parseInt(document.getElementById('tiktokClips').value) || 0,
+                fb_posts: parseInt(document.getElementById('fbPosts').value) || 0
+            }]);
+
+            if(error) alert("บันทึกกิจกรรมไม่สำเร็จ");
+            else {
+                alert(`บันทึกกิจกรรมประจำเดือน ${month} เรียบร้อย!`);
+                document.getElementById('tiktokClips').value = 0;
+                document.getElementById('fbPosts').value = 0;
+            }
+            btn.innerText = "บันทึกกิจกรรม";
+        }
+
+        async function saveSales() {
+            const month = document.getElementById('globalMonth').value;
+            const product = document.getElementById('productType').value;
+            const qty = parseInt(document.getElementById('salesQty').value) || 0;
+            const amount = parseInt(document.getElementById('salesAmount').value) || 0;
+            const detail = document.getElementById('otherDetail').value;
+
+            if (qty === 0 && amount === 0) return alert("กรุณากรอกจำนวนหน่วยหรือเงินบาท");
+
+            const btn = document.getElementById('btnSaveSales');
+            btn.innerText = "กำลังส่งยอด...";
+
+            const { error } = await supabaseClient.from('sales_log').insert([{
+                emp_id: currentUser.id,
+                month: month,
+                product: product,
+                quantity: qty,
+                amount: amount,
+                detail: product === 'Other' ? detail : ""
+            }]);
+
+            if(error) {
+                alert("เกิดปัญหาขัดข้องในการบันทึกยอด");
+            } else {
+                alert(`คีย์เพิ่มยอดขายสำเร็จแล้ว!`);
+                document.getElementById('salesQty').value = 0;
+                document.getElementById('salesAmount').value = 0;
+                await loadSalesData();
+            }
+            btn.innerText = "ส่งยอดเข้าระบบส่วนกลาง";
+        }
+
+        async function loadSalesData() {
+            const { data, error } = await supabaseClient
+                .from('sales_log')
+                .select('*')
+                .eq('emp_id', currentUser.id)
+                .order('created_at', { ascending: false });
+            
+            if(!error && data) {
+                mySalesLog = data;
+                renderDashboard();
+            }
+        }
+
+        function renderDashboard() {
+            const filterMonth = document.getElementById('dashboardFilter').value;
+            let filteredSales = mySalesLog;
+            if (filterMonth !== 'ALL') {
+                filteredSales = filteredSales.filter(log => log.month === filterMonth);
+            }
+
+            let totalThb = 0, totalCards = 0, sumAuto = 0, sumHome = 0, sumC2G = 0;
+            const tbody = document.getElementById('txLogTable');
+            tbody.innerHTML = '';
+
+            filteredSales.forEach(log => {
+                if (log.product === 'Credit Card' || log.product === 'Cash Card') {
+                    totalCards += log.quantity;
+                } else {
+                    totalThb += log.amount;
+                    if (log.product === 'Auto Loan') sumAuto += log.amount;
+                    if (log.product === 'Home Loan') sumHome += log.amount;
+                    if (log.product === 'Cash2Go') sumC2G += log.amount;
+                }
+
+                let unit = "รายการ";
+                if(log.product === 'Credit Card' || log.product === 'Cash Card') unit = "ใบ";
+                else if(log.product === 'Auto Loan') unit = "คัน";
+                else if(log.product === 'Home Loan') unit = "หลัง";
+
+                const dateObj = new Date(log.created_at);
+                const dateStr = `${dateObj.getDate()}/${dateObj.getMonth()+1}/${dateObj.getFullYear()}`;
+
+                const tr = document.createElement('tr');
+                tr.className = "border-b hover:bg-gray-50";
+                tr.innerHTML = `
+                    <td class="p-2 text-gray-500">${dateStr}</td>
+                    <td class="p-2 text-ttbBlue font-medium">${log.month}</td>
+                    <td class="p-2">${log.product} ${log.detail ? `(${log.detail})` : ''}</td>
+                    <td class="p-2 text-right">${log.quantity} ${unit}</td>
+                    <td class="p-2 text-right font-semibold text-gray-700">${log.amount.toLocaleString()}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            if(filteredSales.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">ยังไม่มีประวัติการคีย์ยอดในเดือนนี้</td></tr>`;
+            }
+
+            document.getElementById('dashAuto').innerText = sumAuto.toLocaleString();
+            document.getElementById('dashHome').innerText = sumHome.toLocaleString();
+            document.getElementById('dashC2G').innerText = sumC2G.toLocaleString();
+            document.getElementById('dashTotalThb').innerText = totalThb.toLocaleString();
+            document.getElementById('dashTotalCards').innerText = totalCards.toLocaleString();
+        }
+
+        function handleProductChange() {
+            const product = document.getElementById('productType').value;
+            const lblQty = document.getElementById('lblQuantity');
+            const amountInput = document.getElementById('salesAmount');
+            const detailInput = document.getElementById('otherDetail');
+
+            if(product === 'Other') detailInput.classList.remove('hidden');
+            else detailInput.classList.add('hidden');
+
+            if (product === 'Credit Card' || product === 'Cash Card') {
+                lblQty.innerText = "จำนวน (ใบ)";
+                amountInput.value = 0;
+                amountInput.disabled = true;
+                amountInput.classList.add('bg-gray-100', 'text-gray-400');
+            } else if (product === 'Auto Loan') {
+                lblQty.innerText = "จำนวน (คัน)";
+                amountInput.disabled = false;
+                amountInput.classList.remove('bg-gray-100', 'text-gray-400');
+            } else if (product === 'Home Loan') {
+                lblQty.innerText = "จำนวน (หลัง)";
+                amountInput.disabled = false;
+                amountInput.classList.remove('bg-gray-100', 'text-gray-400');
+            } else {
+                lblQty.innerText = "จำนวน (รายการ)";
+                amountInput.disabled = false;
+                amountInput.classList.remove('bg-gray-100', 'text-gray-400');
+            }
+        }
+        
+        switchAuthMode('menu');
+    </script>
+</body>
+</html>
