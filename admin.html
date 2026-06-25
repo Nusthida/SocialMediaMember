@@ -286,9 +286,9 @@
             }
 
             // 3.2 กรองยอดขายตามเงื่อนไขเดือนและพนักงาน
-            let filteredSales = salesData.filter(s => activeUserIds.includes(s.employee_id));
+            let filteredSales = salesData.filter(s => activeUserIds.includes(s.emp_id));
             if (filterMonth) {
-                filteredSales = filteredSales.filter(s => s.target_month === filterMonth);
+                filteredSales = filteredSales.filter(s => s.month === filterMonth);
             }
 
             // 3.3 ถังเก็บยอดสะสมในมิติต่างๆ
@@ -300,12 +300,12 @@
             let trendSums = {}; 
 
             filteredSales.forEach(s => {
-                const amt = Number(s.amount_thb) || 0;
+                const amt = Number(s.amount) || 0;
                 const qty = Number(s.quantity) || 0;
-                const pType = s.product_type || 'ไม่ระบุประเภท';
+                const pType = s.product || 'ไม่ระบุประเภท';
 
                 // ค้นหาจับคู่ Zone และ RH ของพนักงานผู้ขายจากฐานข้อมูลสมาชิก
-                const empInfo = usersData.find(u => u.id === s.employee_id);
+                const empInfo = usersData.find(u => u.id === s.emp_id);
                 const zoneName = empInfo && empInfo.zone ? empInfo.zone : 'ไม่มี Zone';
                 const rhName = empInfo && empInfo.rh ? empInfo.rh : 'ไม่มี RH';
 
@@ -328,8 +328,8 @@
                 rhSums[rhName] = (rhSums[rhName] || 0) + amt;
 
                 // สรุปยอดแนวโน้มแยกตามเดือน
-                if(s.target_month) {
-                    trendSums[s.target_month] = (trendSums[s.target_month] || 0) + amt;
+                if(s.month) {
+                    trendSums[s.month] = (trendSums[s.month] || 0) + amt;
                 }
             });
 
@@ -441,11 +441,11 @@
             tbody.innerHTML = salesData.map(s => `
                 <tr class="hover:bg-orange-50/40">
                     <td class="p-4 text-xs text-gray-500">${new Date(s.created_at).toLocaleString('th-TH')}</td>
-                    <td class="p-4 text-sm">${s.target_month || '-'}</td>
-                    <td class="p-4 font-medium">${s.employee_id}</td>
-                    <td class="p-4"><span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">${s.product_type}</span></td>
+                    <td class="p-4 text-sm">${s.month || '-'}</td>
+                    <td class="p-4 font-medium">${s.emp_id}</td>
+                    <td class="p-4"><span class="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">${s.product}</span></td>
                     <td class="p-4 text-sm">${s.quantity || '-'}</td>
-                    <td class="p-4 font-semibold text-right max-w-[120px]">${Number(s.amount_thb||0).toLocaleString()}</td>
+                    <td class="p-4 font-semibold text-right max-w-[120px]">${Number(s.amount||0).toLocaleString()}</td>
                 </tr>
             `).join('');
         }
@@ -455,9 +455,9 @@
             tbody.innerHTML = activityData.map(a => `
                 <tr class="hover:bg-blue-50/40">
                     <td class="p-4 text-xs text-gray-500">${new Date(a.created_at).toLocaleString('th-TH')}</td>
-                    <td class="p-4 text-sm">${a.target_month || '-'}</td>
-                    <td class="p-4 font-medium">${a.employee_id}</td>
-                    <td class="p-4 text-xs">${a.live_datetime ? new Date(a.live_datetime).toLocaleString('th-TH') : '-'}</td>
+                    <td class="p-4 text-sm">${a.month || '-'}</td>
+                    <td class="p-4 font-medium">${a.emp_id}</td>
+                    <td class="p-4 text-xs">${a.live_date ? new Date(a.live_date).toLocaleString('th-TH') : '-'}</td>
                     <td class="p-4 text-sm">${a.live_channel || '-'}</td>
                     <td class="p-4 text-center font-semibold text-blue-600">${a.tiktok_clips || 0}</td>
                     <td class="p-4 text-center font-semibold text-indigo-600">${a.fb_posts || 0}</td>
