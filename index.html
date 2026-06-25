@@ -252,18 +252,27 @@
                 <div class="lg:col-span-2 space-y-6">
                     <div class="glass-card p-4 flex items-center justify-between bg-gradient-to-r from-ttbLightBlue to-white border-l-4 border-ttbBlue">
                         <div class="font-bold text-ttbBlue"><i class="fas fa-calendar-alt mr-2"></i> เลือกเดือนผลงานสำหรับบันทึกข้อมูล</div>
-                        <select id="globalMonth" class="px-4 py-2 border border-blue-300 rounded-lg text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-ttbOrange bg-white">
-                            <option value="มกราคม 2569">มกราคม 2569</option>
-                            <option value="กุมภาพันธ์ 2569">กุมภาพันธ์ 2569</option>
-                            <option value="มีนาคม 2569">มีนาคม 2569</option>
-                            <option value="เมษายน 2569">เมษายน 2569</option>
-                            <option value="พฤษภาคม 2569" selected>พฤษภาคม 2569</option>
-                        </select>
+                       <select id="targetMonth" class="w-full p-2 border rounded focus:ring-2 focus:ring-ttbOrange outline-none">
+    <option value="มกราคม 2569">มกราคม 2569</option>
+    <option value="กุมภาพันธ์ 2569">กุมภาพันธ์ 2569</option>
+    <option value="มีนาคม 2569">มีนาคม 2569</option>
+    <option value="เมษายน 2569">เมษายน 2569</option>
+    <option value="พฤษภาคม 2569">พฤษภาคม 2569</option>
+    <option value="มิถุนายน 2569">มิถุนายน 2569</option>
+    <option value="กรกฎาคม 2569">กรกฎาคม 2569</option>
+    <option value="สิงหาคม 2569">สิงหาคม 2569</option>
+    <option value="กันยายน 2569">กันยายน 2569</option>
+    <option value="ตุลาคม 2569">ตุลาคม 2569</option>
+    <option value="พฤศจิกายน 2569">พฤศจิกายน 2569</option>
+    <option value="ธันวาคม 2569">ธันวาคม 2569</option>
+</select>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="glass-card p-6 border-t-4 border-ttbBlue">
-                            <h3 class="font-bold text-ttbBlue mb-4"><i class="fas fa-video mr-2"></i> บันทึกกิจกรรม (Activity)</h3>
+<h3 class="text-lg font-bold ttb-blue mb-2 border-b pb-2"><i class="fa-solid fa-video mr-2"></i>บันทึกกิจกรรม Social Media</h3>
+<p class="text-sm text-red-500 mb-4 font-medium">* ให้เลือกเดือนที่ Live ด้านบนให้ตรงกับ Log live</p>
+                           `` <h3 class="font-bold text-ttbBlue mb-4"><i class="fas fa-video mr-2"></i> บันทึกกิจกรรม (Activity)</h3>
                             <div class="space-y-4">
                                 <div>
                                     <label class="block text-xs font-semibold text-gray-600 mb-1">วัน/เวลา Live</label>
@@ -648,22 +657,28 @@
         }
 
         async function saveActivity() {
-            const month = document.getElementById('globalMonth').value;
+            const month = document.getElementById('targetMonth').value; 
             const btn = document.getElementById('btnSaveActivity');
             btn.innerText = "กำลังบันทึก...";
             
-            const { error } = await supabaseClient.from('activity_log').insert([{
+            // 🔴 สังเกตตรงนี้นะครับ ชื่อตัวแปรฝั่งซ้ายมือ ต้องพิมพ์ใหญ่-เล็กตรงกับฐานข้อมูลเป๊ะๆ
+            const payload = {
                 emp_id: currentUser.id,
                 month: month,
-                live_date: document.getElementById('liveDate').value || "-",
+                live_date: document.getElementById('liveDate').value || null,
                 live_channel: document.getElementById('liveChannel').value,
                 tiktok_clips: parseInt(document.getElementById('tiktokClips').value) || 0,
-                fb_posts: parseInt(document.getElementById('fbPosts').value) || 0
-            }]);
+                fb_posts: parseInt(document.getElementById('fbPosts').value) || 0,
 
-            if(error) alert("บันทึกกิจกรรมไม่สำเร็จ");
-            else {
+            };
+
+            const { error } = await supabaseClient.from('activity_log').insert([payload]);
+
+            if(error) {
+                alert("บันทึกกิจกรรมไม่สำเร็จ: " + error.message);
+            } else {
                 alert(`บันทึกกิจกรรมประจำเดือน ${month} เรียบร้อย!`);
+                document.getElementById('liveDate').value = '';
                 document.getElementById('tiktokClips').value = 0;
                 document.getElementById('fbPosts').value = 0;
             }
@@ -671,7 +686,8 @@
         }
 
         async function saveSales() {
-            const month = document.getElementById('globalMonth').value;
+            // แก้ไขดึงค่าจาก id ใหม่ (targetMonth)
+            const month = document.getElementById('targetMonth').value;
             const product = document.getElementById('productType').value;
             const qty = parseInt(document.getElementById('salesQty').value) || 0;
             const amount = parseInt(document.getElementById('salesAmount').value) || 0;
@@ -682,36 +698,39 @@
             const btn = document.getElementById('btnSaveSales');
             btn.innerText = "กำลังส่งยอด...";
 
+            // เปลี่ยนชื่อคอลัมน์ให้ตรงกับ Supabase (ตัวพิมพ์ใหญ่)
             const { error } = await supabaseClient.from('sales_log').insert([{
                 emp_id: currentUser.id,
                 month: month,
-                product: product,
+                product: product === 'Other' ? `Other - ${detail}` : product,
                 quantity: qty,
-                amount: amount,
-                detail: product === 'Other' ? detail : ""
+                amount: amount
             }]);
 
             if(error) {
-                alert("เกิดปัญหาขัดข้องในการบันทึกยอด");
+                alert("เกิดปัญหาขัดข้องในการบันทึกยอด: " + error.message);
             } else {
                 alert(`คีย์เพิ่มยอดขายสำเร็จแล้ว!`);
                 document.getElementById('salesQty').value = 0;
                 document.getElementById('salesAmount').value = 0;
-                await loadSalesData();
+                document.getElementById('otherDetail').value = '';
+                await loadSalesData(); // โหลดข้อมูลใหม่มาแสดง
             }
             btn.innerText = "ส่งยอดเข้าระบบส่วนกลาง";
         }
 
         async function loadSalesData() {
+            // เปลี่ยนให้อ่านจากตารางและคอลัมน์ตัวพิมพ์ใหญ่
             const { data, error } = await supabaseClient
                 .from('sales_log')
                 .select('*')
-                .eq('emp_id', currentUser.id)
-                .order('created_at', { ascending: false });
+                .eq('Emp_id', currentUser.id); 
             
             if(!error && data) {
                 mySalesLog = data;
                 renderDashboard();
+            } else if (error) {
+                console.error("โหลดข้อมูลผลงานไม่สำเร็จ:", error.message);
             }
         }
 
@@ -719,7 +738,8 @@
             const filterMonth = document.getElementById('dashboardFilter').value;
             let filteredSales = mySalesLog;
             if (filterMonth !== 'ALL') {
-                filteredSales = filteredSales.filter(log => log.month === filterMonth);
+                // กรองข้อมูลด้วย Target_month
+                filteredSales = filteredSales.filter(log => log.Target_month === filterMonth);
             }
 
             let totalThb = 0, totalCards = 0, sumAuto = 0, sumHome = 0, sumC2G = 0;
@@ -727,31 +747,35 @@
             tbody.innerHTML = '';
 
             filteredSales.forEach(log => {
-                if (log.product === 'Credit Card' || log.product === 'Cash Card') {
-                    totalCards += log.quantity;
+                // คำนวณยอดขายโดยใช้คอลัมน์ตัวพิมพ์ใหญ่
+                if (log.Product_type === 'Credit Card' || log.Product_type === 'Cash Card') {
+                    totalCards += (log.Quantity || 0);
                 } else {
-                    totalThb += log.amount;
-                    if (log.product === 'Auto Loan') sumAuto += log.amount;
-                    if (log.product === 'Home Loan') sumHome += log.amount;
-                    if (log.product === 'Cash2Go') sumC2G += log.amount;
+                    totalThb += (log.Amount_THB || 0);
+                    if (log.Product_type === 'Auto Loan') sumAuto += (log.Amount_THB || 0);
+                    if (log.Product_type === 'Home Loan') sumHome += (log.Amount_THB || 0);
+                    if (log.Product_type === 'Cash2Go') sumC2G += (log.Amount_THB || 0);
                 }
 
                 let unit = "รายการ";
-                if(log.product === 'Credit Card' || log.product === 'Cash Card') unit = "ใบ";
-                else if(log.product === 'Auto Loan') unit = "คัน";
-                else if(log.product === 'Home Loan') unit = "หลัง";
+                if(log.Product_type === 'Credit Card' || log.Product_type === 'Cash Card') unit = "ใบ";
+                else if(log.Product_type === 'Auto Loan') unit = "คัน";
+                else if(log.Product_type === 'Home Loan') unit = "หลัง";
 
-                const dateObj = new Date(log.created_at);
-                const dateStr = `${dateObj.getDate()}/${dateObj.getMonth()+1}/${dateObj.getFullYear()}`;
+                let dateStr = "-";
+                if(log.created_at || log.Created_at) {
+                    const dateObj = new Date(log.created_at || log.Created_at);
+                    dateStr = `${dateObj.getDate()}/${dateObj.getMonth()+1}/${dateObj.getFullYear()}`;
+                }
 
                 const tr = document.createElement('tr');
                 tr.className = "border-b hover:bg-gray-50";
                 tr.innerHTML = `
                     <td class="p-2 text-gray-500">${dateStr}</td>
-                    <td class="p-2 text-ttbBlue font-medium">${log.month}</td>
-                    <td class="p-2">${log.product} ${log.detail ? `(${log.detail})` : ''}</td>
-                    <td class="p-2 text-right">${log.quantity} ${unit}</td>
-                    <td class="p-2 text-right font-semibold text-gray-700">${log.amount.toLocaleString()}</td>
+                    <td class="p-2 text-ttbBlue font-medium">${log.Target_month || '-'}</td>
+                    <td class="p-2">${log.Product_type || '-'}</td>
+                    <td class="p-2 text-right">${log.Quantity || 0} ${unit}</td>
+                    <td class="p-2 text-right font-semibold text-gray-700">${(log.Amount_THB || 0).toLocaleString()}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -760,6 +784,7 @@
                 tbody.innerHTML = `<tr><td colspan="5" class="p-4 text-center text-gray-400">ยังไม่มีประวัติการคีย์ยอดในเดือนนี้</td></tr>`;
             }
 
+            // อัปเดตตัวเลขบนการ์ด Dashboard
             document.getElementById('dashAuto').innerText = sumAuto.toLocaleString();
             document.getElementById('dashHome').innerText = sumHome.toLocaleString();
             document.getElementById('dashC2G').innerText = sumC2G.toLocaleString();
